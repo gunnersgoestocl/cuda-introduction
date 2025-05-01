@@ -8,5 +8,7 @@ module purge
 module load cuda
 
 cd ${PBS_O_WORKDIR}
-# ./hello_world_check   # with debug
-./hello_world           # without debug
+# ./device_query        # device detection
+./hello_world_check   # with debug
+# ./hello_world           # without debug
+# ./hello_gpu
