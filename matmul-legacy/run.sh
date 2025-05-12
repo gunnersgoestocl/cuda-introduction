@@ -8,4 +8,6 @@ module purge
 module load cuda
 
 cd ${PBS_O_WORKDIR}
-./matmul/gpu
+# ./matmul_cpu 64
+# ./matmul_gpu 64
+./matmul_compare 256
