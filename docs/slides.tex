@@ -1,0 +1,279 @@
+\documentclass[dvipdfmx,11pt]{beamer}   % dvipdfmx で非 ASCII 画像も安全
+\usetheme{metropolis}
+\usecolortheme{default}
+\title{CUDA: understand to be a genuine user}
+\author{takigawa}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% タイトルスライド
+\begin{frame}
+  \titlepage       
+\end{frame}
+% 目次
+\begin{frame}{Contents}
+  \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item What is CUDA?: Introduction
+    \item A CUDA program for beginners
+    \item How CUDA works
+    \item Optimize CUDA program
+    \item Practice Problems
+  \end{enumerate}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{What is CUDA?}
+% 目次
+\begin{frame}{Contents}
+  \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item What is CUDA?: Introduction
+    \item \textcolor{gray}{A CUDA program for beginners}
+    \item \textcolor{gray}{How CUDA works}
+    \item \textcolor{gray}{Optimize CUDA program}
+    \item \textcolor{gray}{Practice Problems}
+  \end{enumerate}
+\end{frame}
+%%%%%
+\begin{frame}{CUDA is the abstraction of GPU(s) for programmers}
+  
+\end{frame}
+%%%%%
+\begin{frame}{To compile/run CUDA programs: NVCC}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A CUDA program for beginners}
+% 目次
+\begin{frame}{Contents}
+  \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item \textcolor{gray}{What is CUDA?: Introduction}
+    \item A CUDA program for beginners
+    \begin{enumerate}
+      \item Kernels; writing and launching
+      % __global__ kernelFunction, kernelFunction<<nb, bs>>(arg1, arg2, ...)
+      \item Host-Device Data Communication (+ Synchronization)
+      % cudaMalloc, cudaMemcpy, cudaMallocManaged, cudaDeviceSynchronize
+    \end{enumerate}
+    \item \textcolor{gray}{How CUDA works}
+    \item \textcolor{gray}{Optimize CUDA program}
+    \item \textcolor{gray}{Practice Problems}
+  \end{enumerate}
+\end{frame}
+%%%%%%%%%
+\begin{frame}{Setting environment: Using GH200(s) on miyabi}
+
+\end{frame}
+%%%%%%%%%
+\begin{frame}{Sample program #1: \lstinline|hello_world.cu|}
+
+\end{frame}
+%%%%%
+\begin{frame}{3 files are required for execution on miyabi}
+% .cu, makefile, .sh
+
+\end{frame}
+%%%%%
+\begin{frame}{Contents of .cu file: kernel function}
+% keywords (__global__ etc.)
+  
+\end{frame}
+%%%%%
+\begin{frame}{Contents of .cu file: launching kernel by a host}
+% specify the number of threads (and blocks), you can use dim3 struct
+
+\end{frame}
+%%%%%
+\begin{frame}{Interlude: register values programs can explicitly use}
+% gridDim, blockIdx, blockDim, threadIdx
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Sample program #2: \lstinline|hello_gpu.cu|}
+
+\end{frame}
+%%%%%
+\begin{frame}{Data communication between H & Ds}
+% cudaMalloc, cudaMemcpy
+
+\end{frame}
+%%%%%
+\begin{frame}{Host-Device synchronization}
+
+\end{frame}
+%%%%%
+\begin{frame}{(+) "Programmer-free" data communication between H & Ds}
+% cudaMallocManaged, Unified Memory
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{HOW CUDA works}
+% 目次
+\begin{frame}{Contents}
+  \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item \textcolor{gray}{What is CUDA?: Introduction}
+    \item \textcolor{gray}{A CUDA program for beginners}
+    \item How CUDA works
+    \begin{enumerate}
+      \item Architecture of NVIDIA GPU
+      % GPU unit, global memory, stream processor
+      \item Grid, block, thread; abstractions by CUDA
+      % block-SM, grid-GPU unit
+      \item Warp; Parallel Thread eXecution
+      % warp consists of 32 threads, SIMD, why threadIdx/blockIdx
+      \item Memory Hierarchy in CUDA
+      % global memory, shared memory, cache
+      \item Resolving race condition on CUDA
+      % atomicAdd, barrier synchronization, reduction(, cooperative groups)
+    \end{enumerate}
+    \item \textcolor{gray}{Optimize CUDA program}
+    \item \textcolor{gray}{Practice Problems}
+  \end{enumerate}
+\end{frame}
+%%%%%%%%
+\begin{frame}{Architecture of NVIDIA GPU: GPU unit}
+% global memory, SM, link etc.
+
+\end{frame}
+%%%%%
+\begin{frame}{Architecture of NVIDIA GPU: Stream Multiprocessors}
+% CUDA core, regfile, Warp scheduler
+
+\end{frame}
+%%%%%
+\begin{frame}{Architecture of NVIDIA GPU: Stream Multiprocessors}
+% cache, shared memory
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{3 easy pieces about hardware - software}
+
+\end{frame}
+%%%%%
+\begin{frame}{You may have questions like ...}
+% 3 key questions to understand CUDA abstraction
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Warp: The way to realize "Parallel" Thread eXecution}
+  % Parallelism in your program is sometimes helped by Concurrency
+\end{frame}
+%%%%%
+\begin{frame}{Hierarchy within an SM}
+  % thread < warp < block < SM
+
+\end{frame}
+%%%%%
+\begin{frame}{(+) Warp Scheduling}
+  % GTO
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Memory hierarchy of NVIDIA GPU}
+  % global memory, shared memory, cache etc. Clarify which programmers can explicitly use
+
+\end{frame}
+%%%%%
+\begin{frame}{Tiling: effective use of shared memory}
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{To avoid race conditions: effective use of parameters}
+
+\end{frame}
+%%%%%
+\begin{frame}{To avoid race conditions: barrier synchronization}
+
+\end{frame}
+%%%%%
+\begin{frame}{To avoid race conditions: Cooperative groups}
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{(Reluctantly) resolve race conditions: Atomic accumulations}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Optimize CUDA program}
+% 目次
+\begin{frame}{Contents}
+    \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item \textcolor{gray}{What is CUDA?: Introduction}
+    \item \textcolor{gray}{A CUDA program for beginners}
+    \item \textcolor{gray}{How CUDA works}
+    \item Optimize CUDA program
+    \begin{enumerate}
+      \item How to measure performance?
+      \item Choosing a good block size for performance
+      \item Using shared memory effectively
+      \item Example: matrix multiplication
+    \end{enumerate}
+    \item \textcolor{gray}{Practice Problems}
+  \end{enumerate}
+\end{frame}
+%%%%%%%%
+\begin{frame}{How to measure performance: }
+
+\end{frame}
+%%%%%
+\begin{frame}{How to measure performance: }
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Matmul program (naive implementation)}
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Choosing a good block size, thread dim}
+
+\end{frame}
+%%%%%%%
+\begin{frame}{Using shared memory, cache effectively}
+
+\end{frame}
+%%%%%%%
+\begin{frame}{Optimized matmul program}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 目次
+\begin{frame}{Contents}
+  \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+    \item \textcolor{gray}{What is CUDA?: Introduction}
+    \item \textcolor{gray}{A CUDA program for beginners}
+    \item \textcolor{gray}{How CUDA works}
+    \item \textcolor{gray}{Optimize CUDA program}
+    \item Practice Problems
+    \begin{enumerate}
+      \item k-NN for vector Database
+      \item SW's local alignment; DP acceleration with GPU
+    \end{enumerate}
+  \end{enumerate}
+\end{frame}
+%%%%%%%%
+\begin{frame}{Problem #1: k-NN for vector Database}
+
+\end{frame}
+%%%%%
+\begin{frame}{Hint: How to launch kernel across multiple GPUs}
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Problem #2: local alignment of DNA arrays}
+
+\end{frame}
+%%%%%
+\begin{frame}{Smith Water 's DP}
+
+\end{frame}
+%%%%%%%%
+\begin{frame}{Further problems ...}
+  % list of mundane problems
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{References}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}

@@ -122,7 +122,6 @@ void matMulCpu(double *input_mat1, double *input_mat2, double *output_mat, int d
     // each dimention of mat is expected to be the same.
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
-            output_mat[i*dim+j] = 0.0;  // 初期化
             for (int k = 0; k < dim; ++k) {
                 output_mat[i*dim+j] += input_mat1[i*dim+k] * input_mat2[k*dim+j];
             }
