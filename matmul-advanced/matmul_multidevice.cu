@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     }
     
     // コマンドラインから引数を取得
-    int matrixSize = atoi(argv[1]);   // 行列サイズ
+    int matrixSize = 1<<atoi(argv[1]);   // 行列サイズ
     int numGPUs = atoi(argv[2]);      // 使用GPU数
     
     // 利用可能なGPU数を確認
