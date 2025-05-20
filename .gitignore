@@ -2,5 +2,11 @@
 !*/
 !*.*
 *.sh.*
+*.aux
+*.nav
+*.synctex.gz
+*.snm
+*.toc
+*.vrb
 !*.out
 !makefile
