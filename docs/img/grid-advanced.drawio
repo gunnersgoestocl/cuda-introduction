@@ -1,13 +1,13 @@
-<mxfile host="65bd71144e">
+<mxfile host="65bd71144e" scale="4" border="0">
     <diagram id="GPU_Stream_Hardware" name="GPU Hardware Stream Grid Relationship">
-        <mxGraphModel dx="1033" dy="690" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="850" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="675" dy="483" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="850" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="53" value="ストリーム操作の流れと処理" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" parent="1" vertex="1">
                     <mxGeometry x="50" y="200" width="250" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="67" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="67" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="40" y="240" width="240" height="220" as="geometry"/>
                 </mxCell>
                 <mxCell id="2" value="Host (CPU)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=16;fontStyle=1;verticalAlign=top;spacingTop=15;shadow=0;" parent="67" vertex="1">
@@ -22,10 +22,10 @@
                 <mxCell id="5" value="Stream 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" parent="67" vertex="1">
                     <mxGeometry x="130" y="134.44444444444446" width="90" height="48.88888888888889" as="geometry"/>
                 </mxCell>
-                <mxCell id="81" value="A&amp;lt;&amp;lt;(3,1),...., 1&amp;gt;&amp;gt;&lt;div&gt;B&amp;lt;&amp;lt;....., 1&amp;gt;&amp;gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E5CCFF;" vertex="1" parent="67">
+                <mxCell id="81" value="A&amp;lt;&amp;lt;(3,1),...., 1&amp;gt;&amp;gt;&lt;div&gt;B&amp;lt;&amp;lt;....., 1&amp;gt;&amp;gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E5CCFF;" parent="67" vertex="1">
                     <mxGeometry x="4" y="120" width="100" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="82" value="C&amp;lt;&amp;lt;(3,2),...., 2&amp;gt;&amp;gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E5CCFF;" vertex="1" parent="67">
+                <mxCell id="82" value="C&amp;lt;&amp;lt;(3,2),...., 2&amp;gt;&amp;gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fillColor=#E5CCFF;" parent="67" vertex="1">
                     <mxGeometry x="135" y="120" width="100" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="52" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="3" target="7" edge="1">
@@ -49,7 +49,7 @@
                 <mxCell id="62" value="Stream 2&#xa;Operations" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=12;fontStyle=1;container=0;" parent="1" vertex="1">
                     <mxGeometry x="590" y="715" width="80" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="69" value="" style="group;fillColor=#FFFFFF;fontSize=16;" vertex="1" connectable="0" parent="1">
+                <mxCell id="69" value="" style="group;fillColor=#FFFFFF;fontSize=16;" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="50" y="610" width="520" height="170" as="geometry"/>
                 </mxCell>
                 <mxCell id="54" value="1. ホストがストリーム操作を発行" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" parent="69" vertex="1">
@@ -73,7 +73,7 @@
                 <mxCell id="60" value="※ 異なるストリームからのブロックが同時にSM上に存在可能→並行実行" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=3" parent="69" vertex="1">
                     <mxGeometry y="145.71428571428572" width="484.54545454545456" height="24.28571428571428" as="geometry"/>
                 </mxCell>
-                <mxCell id="70" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="70" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="710" y="510" width="440" height="280" as="geometry"/>
                 </mxCell>
                 <mxCell id="29" value="Streaming Multiprocessors (SMs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=15;container=0;" parent="70" vertex="1">
@@ -118,16 +118,16 @@
                 <mxCell id="44" value="Block (2,0)&#xa;from Grid 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;container=0;" parent="70" vertex="1">
                     <mxGeometry x="170" y="190" width="100" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="78" value="Block (0,1)&lt;br&gt;from Grid 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;container=0;" vertex="1" parent="70">
+                <mxCell id="78" value="Block (0,1)&lt;br&gt;from Grid 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;container=0;" parent="70" vertex="1">
                     <mxGeometry x="310" y="105" width="100" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="63" value="Concurrent execution of blocks&amp;nbsp;&lt;div&gt;from different streams on SMs&lt;/div&gt;" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=12;fontStyle=1;container=0;" parent="70" vertex="1">
                     <mxGeometry x="110" y="135" width="230" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="79" value="Block (2,1)&lt;br&gt;from Grid 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;container=0;" vertex="1" parent="70">
+                <mxCell id="79" value="Block (2,1)&lt;br&gt;from Grid 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;container=0;" parent="70" vertex="1">
                     <mxGeometry x="30" y="225" width="100" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="73" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="73" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="650" y="290" width="510" height="210" as="geometry"/>
                 </mxCell>
                 <mxCell id="16" value="Work Distributor Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=15;fontStyle=1;verticalAlign=top;spacingTop=15;container=0;" parent="73" vertex="1">
@@ -145,7 +145,7 @@
                 <mxCell id="21" value="Block Scheduler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;container=0;" parent="73" vertex="1">
                     <mxGeometry x="230" y="100" width="180" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="71" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;shape=link;" edge="1" parent="73" source="22" target="17">
+                <mxCell id="71" style="edgeStyle=none;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;shape=link;" parent="73" source="22" target="17" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="22" value="Dependency Tracker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;container=0;" parent="73" vertex="1">
@@ -177,7 +177,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="74" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="74" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="350" y="250" width="280" height="340" as="geometry"/>
                 </mxCell>
                 <mxCell id="11" value="Hardware Queues" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=15;container=0;" parent="74" vertex="1">
@@ -195,7 +195,7 @@
                         <mxPoint x="630" y="100" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="72" value="" style="group" vertex="1" connectable="0" parent="74">
+                <mxCell id="72" value="" style="group" parent="74" vertex="1" connectable="0">
                     <mxGeometry x="23.333333333333336" width="233.33333333333334" height="160" as="geometry"/>
                 </mxCell>
                 <mxCell id="7" value="Command Processor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=15;container=0;" parent="72" vertex="1">
@@ -210,13 +210,13 @@
                 <mxCell id="10" value="Decoder" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;container=0;" parent="72" vertex="1">
                     <mxGeometry x="23.333333333333336" y="122.5" width="186.66666666666669" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="75" value="G1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="74">
+                <mxCell id="75" value="G1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="74" vertex="1">
                     <mxGeometry x="220" y="250" width="40" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="76" value="G2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="74">
+                <mxCell id="76" value="G2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="74" vertex="1">
                     <mxGeometry x="170" y="250" width="40" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="77" value="G3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFF66;strokeColor=#d6b656;" vertex="1" parent="74">
+                <mxCell id="77" value="G3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFF66;strokeColor=#d6b656;" parent="74" vertex="1">
                     <mxGeometry x="220" y="290" width="40" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="49" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="13" target="20" edge="1">

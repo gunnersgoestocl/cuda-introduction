@@ -1,6 +1,6 @@
-<mxfile host="65bd71144e">
+<mxfile host="65bd71144e" scale="4" border="0">
     <diagram id="GH200_Architecture" name="GH200 GPU Architecture">
-        <mxGraphModel dx="964" dy="644" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="675" dy="483" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -94,7 +94,7 @@
                 <mxCell id="110" value="実行管理" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1" parent="1" vertex="1">
                     <mxGeometry x="374" y="299" width="90" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="111" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="111" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="610" y="64" width="160" height="256" as="geometry"/>
                 </mxCell>
                 <mxCell id="100" value="Host Interface &amp; Command Processing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;verticalAlign=top;spacingTop=5;" parent="111" vertex="1">

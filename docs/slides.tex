@@ -2,6 +2,7 @@
 \usetheme{metropolis}
 \usecolortheme{metropolis}
 \usepackage{booktabs}
+\usepackage{ulem}
 \usepackage{tabularx}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X} % 左寄せの X 列
 \usepackage{graphicx}
@@ -538,7 +539,7 @@ h2();
 \begin{columns}
   \column{0.45\textwidth}
   \begin{figure}
-    \includegraphics[scale=0.28]{img/gpuUnit.png}
+    \includegraphics[scale=0.07]{img/gpuUnit.png}
     \caption{Device GPU}
   \end{figure}
   \column{0.49\textwidth}
@@ -565,7 +566,7 @@ h2();
   \column{0.47\textwidth}
   \vspace{\baselineskip}
   \begin{figure}
-    \includegraphics[scale=0.28]{img/sm90.png}
+    \includegraphics[scale=0.07]{img/sm90.png}
     \caption{Device GPU}
   \end{figure}
   \column{0.47\textwidth}
@@ -637,6 +638,12 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
   \end{itemize}
 \end{frame}
 %%%%%
+\begin{frame}{Warp management: overview}
+  \begin{figure}
+    \includegraphics[scale=0.075]{img/warpScheduling.png}
+  \end{figure}
+\end{frame}
+%%%%%
 \begin{frame}{Hierarchy within an SM}
   % thread < warp < block < SM
   Parallelism within an Stream Multiprocessor consists of three levels.
@@ -647,7 +654,7 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
   \begin{columns}
     \column{0.60\textwidth}
     \begin{figure}
-      \includegraphics[scale=0.3]{img/smHierarchy.png}
+      \includegraphics[scale=0.075]{img/smHierarchy.png}
     \end{figure}
     \column{0.45\textwidth}
     \begin{itemize}
@@ -687,7 +694,7 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
 %%%%%
 \begin{frame}{Flow of Stream Operation}
   \begin{figure}
-    \includegraphics[scale=0.32]{img/grid-advanced_ver2.png}
+    \includegraphics[scale=0.08]{img/grid-advanced_ver2.png}
   \end{figure}
 \end{frame}
 %%%%%
@@ -713,8 +720,33 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 \end{lstlisting}
 \end{frame}
 %%%%%
-\begin{frame}{(+) Using multiple Devices}
+\begin{frame}{(+) Using multiple Devices in a single Node : thread}
+  † You CANNOT try this on Miyabi, because each node has only \textcolor{red}{1} device.
 
+  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/matmul_multidevice.cu}{\uline{サンプルコード}}
+
+  However, I don't have the environment where the program can execute.
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{(+) Using multiple nodes: MPI}
+  Simple Idea:
+  \begin{itemize}
+    \item Create a dedicated MPI process for each GPU, and process all communications with MPI
+    \item \textcolor{blue}{Root process}: Initialization, Result presentation
+    \begin{itemize}
+      \item Activate communication, get process ID (\textcolor{blue}{rank}), set gpu device
+      \begin{itemize}
+        \item \lstinline|MPI_Init, MPI_Comm_rank, MPI_Comm_size|
+      \end{itemize}
+      \item Distribute data from \textcolor{blue}{Root} to the processes
+      \item Gather result from the processes to \textcolor{blue}{Root}
+    \end{itemize}
+  \end{itemize}
+  Sample Program: 
+  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/matmul_multinode.cu}{\uline{\lstinline|matmul_multinode.cu| (github link)}} (just \lstinline|make|) 
+
+  Job Script:
+  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/run.sh}{Sample Script (github link)} (just \lstinline|qsub ./run.sh|)
 \end{frame}
 %%%%%%%%%
 \subsection{Memory Hierarchy in CUDA}
@@ -724,8 +756,35 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 
 \end{frame}
 %%%%%
+\begin{frame}[fragile]{To reduce bottlenecks : coalescing memory access}
+  \begin{itemize}
+    \item DRAM (global memory) transaction size is \textcolor{blue}{$32$}bytes (i.e., \textcolor{blue}{Load/Store Unit} handles read/write in \textcolor{blue}{$32$}-byte units with \lstinline|write-enable| bits)
+    \begin{itemize}
+      \item Reccomendation: refer to appendix (Hardware implementation of CPU's LSU)
+    \end{itemize}
+    \item Accesses to the same transaction unit \uwave{from a single \textbf{warp}} are \textcolor{red}{Coalesced} (i.e., \textcolor{blue}{LSU} handles those \textcolor{red}{logical} accesses as a single \textcolor{red}{physical} access)
+    \begin{itemize}
+      \item If \lstinline|size_of(item)=|$2^{K}$, access to $2^{5-K}$ items (=$2^{5-K}$ threads) can be coalesced at most
+    \end{itemize}
+    \item Memory addresses accessed by threads of \textbf{warp} (consists of 32 threads whose \lstinline|Id.x| are consecutive) must be \textcolor{red}{serial and dense}
+  \end{itemize}
+\end{frame}
+%%%%%
+\begin{frame}{To reduce bottlenecks : coalescing memory access}
+  \begin{columns}
+    \column{0.4\textwidth}
+    \begin{figure}
+      \includegraphics[scale=0.1]{img/coalesced.png}
+    \end{figure}
+    \column{0.6\textwidth}
+    \begin{figure}
+      \includegraphics[scale=0.1]{img/non-coalesced.png}
+    \end{figure}
+  \end{columns}
+\end{frame}
+%%%%%
 \begin{frame}{Tiling: effective use of shared memory}
-
+  \textcolor{blue}{Shared memory} is equivalent to a \textbf{user-managed cache}
 \end{frame}
 %%%%%%%%
 \subsection{Resolving race condition on CUDA}
@@ -822,6 +881,117 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 \begin{frame}{Further problems ...}
  % list of mundane problems
 
+\end{frame}
+%%%%%%%
+\section{Appendices}
+%%%%%
+\subsection{Hardware implementation of LSU}
+%%%%%
+\begin{frame}[fragile]{(Auxiliary) Hardware implementation of LSU}
+  \vspace{-1.5\baselineskip}
+%  \begin{block}{}
+    \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
+// lsu.v
+module lsu(
+  input clk, rstd,             // clock
+  input [2:0] func_code_in,    // function code (LB, LH, LW, LBU, LHU, SB, SH, SW)
+  input [31:0] alu_result_in,  // ALU result (potential load address, store address)
+  input [31:0] s_data,         // store data
+  ...
+  output reg [31:0] l_data,    // data loaded from memory
+  ...
+);
+  reg [31:0] s_word;       // word to store in memory
+  reg [3:0] we;            // write enable
+  wire [1:0] s_tag = alu_result_in[1:0];       // tag
+  wire [13:0] s_base = alu_result_in[15:2];    // base address
+  
+  ram M_data(
+    .clk(clk),  // control signals
+    // input
+    .we(we),
+    .r_addr(l_base_M), 
+    .w_addr(s_base),
+    .w_data(s_word),
+    // output
+    .r_data(l_word)
+  );
+  ...
+\end{lstlisting}
+%  \end{block}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{(Auxiliary) Hardware implementation of CPU's LSU}
+  \vspace{-1.5\baselineskip}
+%  \begin{block}{}
+    \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
+  /* M-stage */
+  always @(*) begin
+    if (is_store == `ENABLE) begin // transform s_data to 4byte s_word as it corresponds to we
+      case(func_code_in)
+        `SB: begin
+          case (s_tag)
+            2'b00: begin s_word = {24'b0, s_data[7:0]};  we = 4'b0001; end
+            2'b01: begin s_word = {16'b0, s_data[7:0], 8'b0};  we = 4'b0010; end
+            2'b10: begin s_word = {8'b0, s_data[7:0], 16'b0};  we = 4'b0100; end
+            2'b11: begin s_word = {s_data[7:0], 24'b0};  we = 4'b1000; end
+            ...
+          endcase
+        end
+        `SH: begin
+          case(s_tag)
+            2'b00: begin s_word = {16'b0, s_data[15:0]}; we = 4'b0011; end
+            2'b01: begin s_word = {8'b0, s_data[15:0], 8'b0};  we = 4'b0110; end
+            2'b10: begin s_word = {s_data[15:0], 16'b0}; we = 4'b1100; end
+            ...
+          endcase
+        end
+        `SW: begin 
+          s_word = s_data;  we = 4'b1111;
+        end
+        ...
+      endcase
+    end else begin s_word = 32'b0; we = 4'b0000; end
+  end
+  ... // load/store word from/to memory (base = l_addr[31:2]) synchronized with clk
+\end{lstlisting}
+%  \end{block}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{(Auxiliary) Hardware implementation of LSU}
+  \vspace{-1.5\baselineskip}
+%  \begin{block}{}
+    \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
+  /* W-stage */
+  always @(*) begin
+    if (is_load_W == `ENABLE) begin
+      case(func_code_W) // transform l_word to l_data as it corresponds to func_code
+        `LB: begin
+          case (l_tag_W)
+            2'b00: l_data = {{24{l_word[7]}}, l_word[7:0]};
+            2'b01: l_data = {{24{l_word[15]}}, l_word[15:8]};
+            2'b10: l_data = {{24{l_word[23]}}, l_word[23:16]};
+            2'b11: l_data = {{24{l_word[31]}}, l_word[31:24]};
+            default: l_data = 32'b0;
+          endcase
+        end
+        `LH: begin
+          case (l_tag_W)
+            2'b00: l_data = {{16{l_word[15]}}, l_word[15:0]};
+            2'b01: l_data = {{16{l_word[23]}}, l_word[23:8]};
+            2'b10: l_data = {{16{l_word[31]}}, l_word[31:16]};
+            default: l_data = 32'b0;
+          endcase
+        end
+        `LW: begin  l_data = l_word; end // l_addr[1:0] == 2'b00 はコンパイラが保証
+        `LBU: begin  ...  end
+        `LHU: begin  ...  end
+        default l_data = 32'b0;
+      endcase
+    end else begin l_data = 32'b0; end
+  end
+\end{lstlisting}
+%\end{block}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\begin{frame}{References}
