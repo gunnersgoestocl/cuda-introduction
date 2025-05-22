@@ -751,9 +751,30 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 %%%%%%%%%
 \subsection{Memory Hierarchy in CUDA}
 %%%%%
-\begin{frame}{Memory hierarchy of NVIDIA GPU}
- % global memory, shared memory, cache etc. Clarify which programmers can explicitly use
-
+\begin{frame}{Memory hierarchy of NVIDIA GPU: overview}
+  % global memory, shared memory, cache etc. Clarify which programmers can explicitly use
+  \begin{figure}
+    \includegraphics[scale=0.105]{img/memHierarchy.png}
+  \end{figure}
+\end{frame}
+%%%%%
+\begin{frame}{Memory hierarchy of NVIDIA GPU: features}
+  \begin{enumerate}
+    \item host storage: PCIe-5, bandwidth is 512GB/s
+    \item host memory: up to 480GB, bandwidth is up to 500GB/s
+    \item device memory: off-chip, latency is 200-1000 cycles
+    \begin{itemize}
+      \item local mem (512KB), constant mem (64KB), texture mem (28-256KB), global memory (rest)
+      \item HBM3 (96GB), bandwidth is  up to 4.02TB/s, NV Chip2Chip interconnect 900GB/s (bidirectional)
+    \end{itemize}
+    \item L2 Data Cache: on-chip, shared across all SMs, latency is about 200 cycles
+    \item L1 Cache / Shared memory: on-chip, private to each SM, latency is 20-30 cycles, small (total 256KB)
+    \begin{itemize}
+      \item \textcolor{blue}{Shared memory} is equivalent to a \textbf{user-managed cache} (up to 228KB)
+      \item L1 Cache is the space unused as shared memory, buffering when R/W data from/to L2 cache (\textbf{hardware-managed})
+    \end{itemize}
+    \item \textcolor{blue}{Registers}: private to a thread, R/W from/to L1 or shared memory of its SM
+  \end{enumerate}
 \end{frame}
 %%%%%
 \begin{frame}[fragile]{To reduce bottlenecks : coalescing memory access}
@@ -783,8 +804,42 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
   \end{columns}
 \end{frame}
 %%%%%
-\begin{frame}{Tiling: effective use of shared memory}
-  \textcolor{blue}{Shared memory} is equivalent to a \textbf{user-managed cache}
+\begin{frame}[fragile]{Coalesced mem access vs non-coalesced mem access: Code Example}
+  In the following code of \textbf{transpose}, reading from DRAM is coalesced, but writing to DRAM is \textcolor{blue}{not} coalesced
+  \begin{columns}
+    \column{0.43\textwidth}
+\begin{lstlisting}[language=CUDA, basicstyle=\ttfamily\tiny]
+template <typename T>
+__global__ void transpose_read_coalesced(
+  T* output_matrix, 
+  T const* input_matrix,
+  size_t M, size_t N){
+  size_t const j{
+    threadIdx.x + blockIdx.x * blockDim.x};
+  size_t const i{
+    threadIdx.y + blockIdx.y * blockDim.y};
+  size_t const from_idx{i * N + j};
+  if ((i < M) && (j < N)) {
+    size_t const to_idx{j * M + i};
+    output_matrix[to_idx] 
+      = input_matrix[from_idx];
+  }
+}
+\end{lstlisting}
+    \column{0.6\textwidth}
+    \includegraphics[scale=0.1]{img/transposeReadCoalesced.png}
+  \end{columns}
+  This code could be optimized using \textcolor{blue}{shared memory}
+\end{frame}
+%%%%%
+\begin{frame}{Use shared memory to reduce non-coalesced memory: example}
+  \begin{figure}
+    \includegraphics[scale=0.08]{img/transposeFullCoalesced.png}
+  \end{figure}
+\end{frame}
+%%%%%%%%
+\begin{frame}{(+) Tiling: effective use of shared memory in GEMM}
+  
 \end{frame}
 %%%%%%%%
 \subsection{Resolving race condition on CUDA}
@@ -847,6 +902,8 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 %
 %\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Practice Problems}
+%%%%%%%%%
 % 目次
 \begin{frame}{Contents}
  \begin{enumerate}   % <+-> で 1 行ずつ出現
@@ -856,34 +913,49 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
    \item \textcolor{gray}{Optimize CUDA program}
    \item Practice Problems
    \begin{enumerate}
-     \item k-NN for vector Database
-     \item SW's local alignment; DP acceleration with GPU
+     \item Problem: accelerate the Transformer block inference
+     \item (Option) Mundane problems
    \end{enumerate}
  \end{enumerate}
 \end{frame}
 %%%%%%%%
-%\begin{frame}{Problem \#1: k-NN for vector Database}
-%
-%\end{frame}
-%%%%%%
-%\begin{frame}{Hint: How to launch kernel across multiple GPUs}
-%
-%\end{frame}
-%%%%%%%%%
-%\begin{frame}{Problem \#2: local alignment of DNA arrays}
-%
-%\end{frame}
-%%%%%
-\begin{frame}{Smith Water 's DP}
-
+\begin{frame}{Practical Problem: accelerate the Transformer block inference}
+  \begin{itemize}
+    \item Model Architecture
+    \begin{enumerate}
+      \item \lstinline|Matmul| \lstinline|input_embeddings| with $W_Q, W_K, W_V$ each
+      \item \lstinline|Matmul| \lstinline|Transpose(Q)| with \lstinline|K| to get scores \lstinline|S|
+      \item \lstinline|Softmax| on \lstinline|Score| to get (normalized) attention scores \lstinline|A|
+      \item \lstinline|Matmul| \lstinline|V| with \lstinline|A| to get output \lstinline|O| of the Head
+      \item \lstinline|Concat| \lstinline|O| of each head into a single output \lstinline|Os|
+      \item \lstinline|Add| \lstinline|input_embeddings| with \lstinline|Os| (Residual Connection) -> calls \lstinline|Oracle| here
+      \item \lstinline|LayerNorm| on \lstinline|Oracle| 
+      \item \lstinline|Matmul| with Feed Forward's \lstinline|weights|
+      \item \lstinline|ReLU|, again \lstinline|Matmul|
+    \end{enumerate}
+    \item First step: define \lstinline|Kernel|s of each operation
+    \item Second step: measure performance, and optimize them
+    \item Third step: cooperate a set of operations using Streams(, Devices), Nodes
+  \end{itemize}
 \end{frame}
 %%%%%%%%
 \begin{frame}{Further problems ...}
- % list of mundane problems
-
+  % list of mundane problems
+  \begin{enumerate}
+    \item k-NN for vector Database (on huge vectors)
+    \item local alignment of DNA arrays: Smith Watermann's DP
+    \item Sort on GPU
+  \end{enumerate}
 \end{frame}
 %%%%%%%
 \section{Appendices}
+%%%%%
+\begin{frame}{Compute Capability of H100 GPU}
+  \begin{figure}
+    \includegraphics[scale=0.3]{img/computeCapability.png}
+    \caption{\href{https://www.advancedclustering.com/wp-content/uploads/2022/03/gtc22-whitepaper-hopper.pdf}{NVIDIA H100 white paper}}
+  \end{figure}
+\end{frame}
 %%%%%
 \subsection{Hardware implementation of LSU}
 %%%%%
@@ -994,17 +1066,19 @@ module lsu(
 %\end{block}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\begin{frame}{References}
-%  \begin{enumerate}
-%    \item \url{https://docs.nvidia.com/cuda/parallel-thread-execution/#}
-%    \item \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#}
-%    \item \url{https://docs.nvidia.com/cuda/cuda-runtime-api/index.html}
-%    \item \url{https://www.nas.nasa.gov/hecc/support/kb/basics-on-nvidia-gpu-hardware-architecture_704.html}
-%    \item %\url{https://developer.nvidia.com/blog/unified-memory-cuda-beginners/}
-%    \item %\url{https://www.nvidia.com/content/pdf/fermi_white_papers/p.glaskowsky_nvidia's_fermi-the_first_complete_gpu_architecture.pdf}
-%    \item %\url{https://developer.nvidia.com/ja-jp/blog/nvidia-hopper-architecture-in-depth/}
-%    \item %\url{https://qiita.com/tarako1889/items/963e8972daa8c490efd4}
-%  \end{enumerate}
-%\end{frame}
+\begin{frame}[fragile]{References}
+  \begin{enumerate}\footnotesize
+    \item \url{https://docs.nvidia.com/cuda/parallel-thread-execution/#}
+    \item \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#}
+    \item \url{https://resources.nvidia.com/en-us-data-center-overview-mc/en-us-data-center-overview/grace-hopper-superchip-datasheet-partner}
+    \item \url{https://docs.nvidia.com/cuda/cuda-runtime-api/index.html}
+    \item \url{https://www.nas.nasa.gov/hecc/support/kb/basics-on-nvidia-gpu-hardware-architecture_704.html}
+    \item \url{https://developer.nvidia.com/blog/unified-memory-cuda-beginners/}
+    \item \url{https://leimao.github.io/blog/CUDA-Coalesced-Memory-Access/}
+    \item \url{https://www.nvidia.com/content/pdf/fermi_white_papers/p.glaskowsky_nvidia's_fermi-the_first_complete_gpu_architecture.pdf}
+    \item \url{https://developer.nvidia.com/ja-jp/blog/nvidia-hopper-architecture-in-depth/}
+    \item \url{https://qiita.com/tarako1889/items/963e8972daa8c490efd4}
+  \end{enumerate}
+\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \end{document}

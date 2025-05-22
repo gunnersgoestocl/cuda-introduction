@@ -1,172 +1,142 @@
-<mxfile host="app.diagrams.net" modified="2025-05-22T00:00:00.000Z" agent="5.0 (Macintosh)" etag="memory-hierarchy-gh200" version="21.0.0" type="device">
-  <diagram id="gh200-memory-hierarchy" name="Memory Hierarchy">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        
-        <!-- Title -->
-        <mxCell id="title" value="Memory Hierarchy of NVIDIA GH200" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="175" y="40" width="500" height="40" as="geometry" />
-        </mxCell>
-        
-        <!-- CPU Side -->
-        <mxCell id="cpu" value="CPU" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="100" y="120" width="120" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- Host Memory -->
-        <mxCell id="host_memory" value="Host Memory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14" vertex="1" parent="1">
-          <mxGeometry x="100" y="200" width="120" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- PCIe -->
-        <mxCell id="pcie" value="PCIe Gen5" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12" vertex="1" parent="1">
-          <mxGeometry x="275" y="150" width="100" height="40" as="geometry" />
-        </mxCell>
-        
-        <!-- NVLink -->
-        <mxCell id="nvlink" value="NVLink 4.0" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12" vertex="1" parent="1">
-          <mxGeometry x="275" y="200" width="100" height="40" as="geometry" />
-        </mxCell>
-        
-        <!-- GPU -->
-        <mxCell id="gpu" value="GH200 GPU" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=16;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="430" y="120" width="320" height="60" as="geometry" />
-        </mxCell>
-        
-        <!-- Grace Hopper Superchip -->
-        <mxCell id="gh_label" value="Grace Hopper Superchip" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=2" vertex="1" parent="1">
-          <mxGeometry x="430" y="100" width="320" height="20" as="geometry" />
-        </mxCell>
-        
-        <!-- HBM3e -->
-        <mxCell id="hbm3" value="HBM3e (192GB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14" vertex="1" parent="1">
-          <mxGeometry x="430" y="200" width="320" height="40" as="geometry" />
-        </mxCell>
-        
-        <!-- L2 Cache -->
-        <mxCell id="l2" value="L2 Cache (60MB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14" vertex="1" parent="1">
-          <mxGeometry x="430" y="260" width="320" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- SMs -->
-        <mxCell id="sms" value="SMs (132)" style="swimlane;horizontal=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;startSize=30" vertex="1" parent="1">
-          <mxGeometry x="430" y="310" width="320" height="150" as="geometry" />
-        </mxCell>
-        
-        <!-- L1 Cache -->
-        <mxCell id="l1" value="L1 Cache / Shared Memory (per SM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="sms">
-          <mxGeometry x="40" y="10" width="270" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- Registers -->
-        <mxCell id="registers" value="Registers (per SM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="sms">
-          <mxGeometry x="40" y="50" width="270" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- CUDA Cores -->
-        <mxCell id="cores" value="CUDA Cores" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="sms">
-          <mxGeometry x="40" y="90" width="120" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- Tensor Cores -->
-        <mxCell id="tensor" value="Tensor Cores" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12" vertex="1" parent="sms">
-          <mxGeometry x="190" y="90" width="120" height="30" as="geometry" />
-        </mxCell>
-        
-        <!-- Connection Lines -->
-        <mxCell id="cpu_to_host" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cpu" target="host_memory">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="cpu_to_pcie" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cpu" target="pcie">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="host_to_nvlink" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="host_memory" target="nvlink">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="pcie_to_gpu" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="pcie" target="gpu">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="nvlink_to_gpu" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="nvlink" target="gpu">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="gpu_to_hbm" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="gpu" target="hbm3">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="hbm_to_l2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="hbm3" target="l2">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="l2_to_sms" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l2" target="sms">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="330" as="sourcePoint" />
-            <mxPoint x="450" y="280" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <!-- Bandwidth Labels -->
-        <mxCell id="bw_pcie" value="64 GB/s" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="295" y="130" width="60" height="20" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="bw_nvlink" value="900 GB/s" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="295" y="220" width="60" height="20" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="bw_hbm" value="~5 TB/s" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="590" y="240" width="60" height="20" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="latency_arrow" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;" edge="1" parent="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="760" y="480" as="sourcePoint" />
-            <mxPoint x="760" y="120" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="latency_text" value="Latency ↑" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=270;fontSize=14;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="730" y="290" width="60" height="30" as="geometry" />
-        </mxCell>
-        
-        <mxCell id="bandwidth_arrow" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;" edge="1" parent="1">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="790" y="120" as="sourcePoint" />
-            <mxPoint x="790" y="480" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        
-        <mxCell id="bandwidth_text" value="Bandwidth ↑" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=270;fontSize=14;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="760" y="290" width="60" height="30" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e" scale="4" border="0">
+    <diagram id="gh200-memory-hierarchy-updated" name="Memory Hierarchy">
+        <mxGraphModel dx="777" dy="420" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="17" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="20" y="50" width="800" height="500" as="geometry"/>
+                </mxCell>
+                <mxCell id="title" value="Memory Hierarchy of NVIDIA GH200" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" parent="17" vertex="1">
+                    <mxGeometry x="90" width="500" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="host_side" value="HOST" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=14;fontStyle=1" parent="17" vertex="1">
+                    <mxGeometry y="100" width="180" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="host_memory" value="Host Memory&lt;div&gt;~480GB&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14" parent="host_side" vertex="1">
+                    <mxGeometry x="20" y="100" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Cores" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fillColor=#b0e3e6;strokeColor=#0e8088;" vertex="1" parent="host_side">
+                    <mxGeometry y="30" width="180" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="host_side" source="3" target="host_memory">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="host_memory_label" value="&amp;nbsp;~500 GB/s" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;" parent="host_side" vertex="1">
+                    <mxGeometry x="90" y="75" width="80" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="host_to_device" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;NV C2C 900 GB/s&lt;/font&gt;" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;rounded=0;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;width=14;endSize=4;startSize=4;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDy=0;exitDx=0;" parent="17" source="host_side" target="device_side" edge="1">
+                    <mxGeometry x="0.0588" width="100" height="100" relative="1" as="geometry">
+                        <mxPoint x="180" y="150" as="sourcePoint"/>
+                        <mxPoint x="280" y="150" as="targetPoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="bandwidth_arrow" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;" parent="17" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="770" y="50" as="sourcePoint"/>
+                        <mxPoint x="770" y="500" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="Host Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14" vertex="1" parent="17">
+                    <mxGeometry x="20" y="50" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="" style="group" vertex="1" connectable="0" parent="17">
+                    <mxGeometry x="260" y="50" width="450" height="450" as="geometry"/>
+                </mxCell>
+                <mxCell id="device_side" value="DEVICE (GH200)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1" parent="6" vertex="1">
+                    <mxGeometry width="450" height="450" as="geometry"/>
+                </mxCell>
+                <mxCell id="device_memory" value="Device Memory (Off-Chip): HBM3 96GB" style="swimlane;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;startSize=30;" parent="device_side" vertex="1">
+                    <mxGeometry x="25" y="40" width="400" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="local_mem" value="Local Memory&#xa;(512 KB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" parent="device_memory" vertex="1">
+                    <mxGeometry x="20" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="constant_mem" value="Constant Memory&#xa;(64 KB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" parent="device_memory" vertex="1">
+                    <mxGeometry x="115" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="texture_mem" value="Texture Memory&#xa;(28-256 KB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" parent="device_memory" vertex="1">
+                    <mxGeometry x="205" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="global_mem" value="Global Memory&#xa;(Remaining)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" parent="device_memory" vertex="1">
+                    <mxGeometry x="295" y="40" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="l2_cache" value="L2 Data Cache (On-Chip)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14" parent="device_side" vertex="1">
+                    <mxGeometry x="25" y="180" width="400" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="l2_cache_label" value="~200 cycles" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" parent="device_side" vertex="1">
+                    <mxGeometry x="225" y="225" width="115" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="sms_container" value="Streaming Multiprocessors (SMs)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;startSize=30" parent="device_side" vertex="1">
+                    <mxGeometry x="25" y="250" width="400" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="l1_shared" value="L1 Cache / Shared Memory (256 KB)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;startSize=30" parent="sms_container" vertex="1">
+                    <mxGeometry x="20" y="40" width="360" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="shared_memory" value="Shared Memory ~228K" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontColor=blue;" parent="l1_shared" vertex="1">
+                    <mxGeometry x="20" y="45" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l1_cache" value="L1 Cache (remaining)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" parent="l1_shared" vertex="1">
+                    <mxGeometry x="190" y="45" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="registers" value="Registers: private to each thread" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontColor=blue;fontStyle=1" parent="sms_container" vertex="1">
+                    <mxGeometry x="20" y="140" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l1_shared_label" value="~20-30 cycles" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;" parent="sms_container" vertex="1">
+                    <mxGeometry x="220" y="124" width="100" height="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="l1_to_registers" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="sms_container" source="l1_shared" target="registers" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="35" y="-20" as="sourcePoint"/>
+                        <mxPoint x="85" y="-70" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="5" value="~200-1000 cycles, 4.02 TB/s" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;" vertex="1" parent="device_side">
+                    <mxGeometry x="25" y="150" width="200" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="mem_to_l2" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="device_side" source="device_memory" target="l2_cache" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="60" y="230" as="sourcePoint"/>
+                        <mxPoint x="110" y="180" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l2_to_sms" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="device_side" source="l2_cache" target="sms_container" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="60" y="230" as="sourcePoint"/>
+                        <mxPoint x="110" y="180" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="latency_arrow" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;" parent="17" edge="1">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="725" y="500" as="sourcePoint"/>
+                        <mxPoint x="725" y="50" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="9" value="Capacity" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=none;fontSize=14;" vertex="1" parent="17">
+                    <mxGeometry x="685" y="180" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="Speed" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=#f5f5f5;fontStyle=1;fontSize=14;fontColor=#333333;" vertex="1" parent="17">
+                    <mxGeometry x="740" y="280" width="60" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="" style="endArrow=none;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="2" target="3" parent="17">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="420" y="100" as="sourcePoint"/>
+                        <mxPoint x="360" y="70" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="210" y="110"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="PCIe-5 ~512GB/s" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;" vertex="1" connectable="0" parent="14">
+                    <mxGeometry x="-0.1008" y="1" relative="1" as="geometry">
+                        <mxPoint y="-11" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="" style="shape=waypoint;sketch=0;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;fontFamily=Helvetica;fontSize=12;fontColor=default;" vertex="1" parent="17">
+                    <mxGeometry x="260" y="270" width="20" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
