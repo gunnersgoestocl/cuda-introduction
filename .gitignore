@@ -10,3 +10,6 @@
 *.vrb
 !*.out
 !makefile
+.DS_Store
+.vscode/
+cuda.pdf
