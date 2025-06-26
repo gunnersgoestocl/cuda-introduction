@@ -1,0 +1,160 @@
+\documentclass[dvipdfmx, 11pt, aspectratio=169]{beamer}   % dvipdfmx で非 ASCII 画像も安全
+\usetheme{metropolis}
+\usecolortheme{metropolis}
+\usepackage{booktabs}
+\usepackage{ulem}
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X} % 左寄せの X 列
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{xcolor}
+% コードのハイライト設定
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    framexleftmargin=2em,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstdefinelanguage{CUDA}{
+  language=[ANSI]C++,                % C++ を継承
+  morekeywords={
+    __global__,__device__,__shared__,__constant__,__managed__,cudaError_t,
+    __syncthreads,atomicAdd,atomicSub,atomicExch,dim3,blockIdx,threadIdx
+  }
+}
+
+\lstdefinestyle{makefilestyle}{
+  language        = make,        % listings 標準の make 言語
+  basicstyle      = \ttfamily\footnotesize,
+  keywordstyle    = \color{blue}\bfseries,
+  commentstyle    = \color{codegreen},
+  stringstyle     = \color{codepurple},
+  numbers         = left,        % 行番号
+  numberstyle     = \scriptsize\color{codegray},
+  stepnumber      = 1,
+  numbersep       = 6pt,
+  tabsize         = 4,           % TAB＝4 スペース
+  showstringspaces= false,
+  showtabs        = false,
+  breaklines      = true,
+  morekeywords    = {CC,CXX,LD,AR,CFLAGS,CXXFLAGS,LDFLAGS,RM,\%.o,all,clean}, % 独自キーワード
+  xleftmargin     = 2em,         % コードブロック全体を右へ
+  frame           = single,      % 枠線
+  backgroundcolor = \color{backcolour}
+}
+
+\lstset{style=mystyle}
+\title{Clang/LLVM + offload}
+\author{Yuri Takigawa}
+\institute{The university of Tokyo, EEIC, Taura Lab}
+\date{\today}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% タイトルスライド
+\begin{frame}
+  \titlepage       
+\end{frame}
+% 目次スライド
+\begin{frame}
+  \frametitle{Contents}
+  \tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Why LLVM/Clang $+$ offload (ja)}
+This is what I wrote in the research plan (in Japanese):
+\begin{quote}
+近年、身近になったLLM を支えるAI ハードウェアアクセラレータは、
+計算速度・メモリ帯域・メモリ容量・スケジューラなどの面で目覚ましい進歩を遂げている。
+一方で、これらのハードウェアアクセラレータの性能を最大限に引き出すには、
+低レベルのプログラミングが求められることが多く、ユーザビリティの向上との両立は依然として大きな課題である。
+ハードウェアの優れた抽象化と、ユーザプログラムを効率的に最適化・変換する言語処理系（コンパイラ）の重要性は今後さらに高まっていくと考えている。特に、NVIDIA GPU に特化したCUDA が事実上の
+標準となりつつある現状において、アーキテクチャの汎用性を高める観点からも、記憶階層の使用最適化やTensor Core をはじめとする特殊ハードウェアの活用最適化の研究が重要であると考えている。
+\end{quote}
+\end{frame}
+%%%%%%
+\begin{frame}{Why LLVM/Clang $+$ offload (en)}
+\begin{quote}
+{\small
+In recent years, AI hardware accelerators that support LLM, which has become more accessible, have made remarkable progress in terms of computing speed, memory bandwidth, memory capacity, schedulers, and other aspects.
+On the other hand, in order to maximise the performance of these hardware accelerators,
+low-level programming is often required, and balancing this with improved usability remains a major challenge.
+We believe that the importance of excellent hardware abstraction and language processing systems (compilers) that efficiently optimise and convert user programs will continue to grow in the future.
+The importance of excellent hardware abstraction and language processing systems (compilers) that efficiently optimise and convert user programs is expected to grow even further in the future. Especially in the current situation where CUDA, specialised for NVIDIA GPUs, is becoming the de facto standard,
+research on optimising the use of memory hierarchies and special hardware such as Tensor Cores is important from the perspective of enhancing architectural versatility.
+}
+\end{quote}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Setup and Compile option}
+%%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \tableofcontents[currentsection]
+\end{frame}
+%%%%%
+\begin{frame}{}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{How to write offload code}
+%%%%%%
+\begin{frame}{aa}
+
+\end{frame}
+%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A Conceptual View of LLVM/Clang + offload}
+%%%%%
+\begin{frame}{Compile via IR}
+Language processing system (言語処理系) has \textbf{front-end} and \textbf{back-end}.
+\begin{itemize}
+    \item \textbf{front-end}: consists of lexer, parser, IR generator
+    \item \textbf{back-end}: optimization, code generation, linking to external library
+    \begin{itemize}
+        \item code generation consists of transformation into machine code of target machine architecture (ARM64, x86\_64, NVPTX, AMDGPU etc.,)
+        \item 
+    \end{itemize}
+\end{itemize}
+
+\end{frame}
+%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{References}
+  \begin{enumerate}\footnotesize
+    \item \href{https://sdk.cerebras.net/computing-with-cerebras#}{cerebras SDK Documentation (1.4.0)}
+    \item \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#}
+    \item \url{https://resources.nvidia.com/en-us-data-center-overview-mc/en-us-data-center-overview/grace-hopper-superchip-datasheet-partner}
+    \item \url{https://docs.nvidia.com/cuda/cuda-runtime-api/index.html}
+    \item \url{https://www.nas.nasa.gov/hecc/support/kb/basics-on-nvidia-gpu-hardware-architecture_704.html}
+    \item \url{https://developer.nvidia.com/blog/unified-memory-cuda-beginners/}
+    \item \url{https://leimao.github.io/blog/CUDA-Coalesced-Memory-Access/}
+    \item \url{https://www.nvidia.com/content/pdf/fermi_white_papers/p.glaskowsky_nvidia's_fermi-the_first_complete_gpu_architecture.pdf}
+    \item \url{https://developer.nvidia.com/ja-jp/blog/nvidia-hopper-architecture-in-depth/}
+    \item \url{https://qiita.com/tarako1889/items/963e8972daa8c490efd4}
+  \end{enumerate}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
