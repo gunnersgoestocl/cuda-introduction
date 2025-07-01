@@ -74,7 +74,7 @@
     task, function, extern, dsd, register, fabric, volatile, 
     struct, const, static, inline, uniform, comptime_struct
     blockid, peid, colorid, color, queue, numpes, numtids,
-    layout, runner
+    layout, runner, comptime
   },
   morekeywords=[2]{
     @send_to_color, @send_to_host, @activate, @block, @unblock,
@@ -83,7 +83,9 @@
     @fmovs, @copy, @fexps, @flogs, @frelus, @fsum, @fmax,
     @fetch, @push, @pop, @peek, @capacity, @fill,
     @get_dsd, @get_dsr, @load_to_dsr, @get_ut_id,
-    @set_rectangle, @set_tile_code, @import_module, @export_name
+    @set_rectangle, @set_tile_code, @import_module, @export_name, @get_color,
+    @initialize_queue, @bind_data_task, @get_data_task_id, @get_input_queue,
+    @bind_local_task
   },
   morekeywords=[3]{
     memcpy_d2h, load, run, launch, base_address, 
@@ -105,7 +107,8 @@
 \makeatother
 \newcommand{\ulhref}[2]{\href{#1}{\textcolor{cyan}{\uline{#2}}}}
 \lstset{style=mystyle}
-\title{Cerebras System: remarkable hardware accelarator and its programming model}
+\title{Cerebras System}
+\subtitle{remarkable hardware accelarator architecure \& its programming model}
 \author{Yuri Takigawa}
 \institute{The university of Tokyo, EEIC, Taura Lab}
 \date{\today}
@@ -395,14 +398,92 @@ There are two \textcolor{blue}{conditions} for tasks be scheduled by \textbf{tas
 \end{figure}
 \end{frame}
 %%%%%
-\begin{frame}{Communication via router: Task activation}
-Three
+\begin{frame}[fragile]{Communication via router: Task activation}
+% Three steps are necessary:
+\begin{enumerate}
+    \item Secure \textbf{color} for communication with \lstinline|const color_name: color = @get_color( . )|
+    \item Secure \textbf{input queue} with \lstinline|const iq_name: input_queue = @get_input_queue( . )|
+    \item Create \textbf{data task ID} from \textbf{an input queue} \lstinline|const task_id_name: data_task_id = @get_data_task_id(iq_name)|
+    \begin{itemize}
+        \item Each data task is bound to an input queue
+    \end{itemize}
+    \item Define what to do in the task with \lstinline|task task_name(wavelet_data){ ... }|
+    \item Define \lstinline|comptime{ ... }| block:
+    \begin{itemize}
+        \item Bind defined task \lstinline|task_name| to created task ID \lstinline|task_id_name| with \lstinline|@bind_data_task(task_name, task_id_name)|
+        \item Bind input queue(s) to which data task is bound to color \lstinline|@initialize_queue(iq_name, .{.color = color_name});|
+    \end{itemize}
+\end{enumerate}
 \end{frame}
 %%%%%
-\begin{frame}{Code Template: link computation and communication using Task}
-\begin{itemize}
-\item 
-\end{itemize}
+\begin{frame}{Psuedo Image of task activation from Router}
+\begin{figure}
+    \includegraphics[scale=0.07]{img/csCommunication.png}
+\end{figure}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Code Template: link computation and communication using Task}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+// 7 is the ID of a color with some defined data routing
+const red: color = @get_color(7);
+
+// On WSE-3, 2 is the ID of an input queue which will be bound to our data task.
+const iq: input_queue = @get_input_queue(2);
+
+// For WSE-2, the ID for this task is created from a color.
+// For WSE-3, the ID for this task is created from an input queue.
+const red_task_id: data_task_id =
+    if (@is_arch("wse3")) @get_data_task_id(iq)
+    else                  @get_data_task_id(red);
+
+var result: f32 = 0.0;
+
+task main_task(wavelet_data: f32) {
+    result = wavelet_data;
+}
+
+comptime {
+    @bind_data_task(main_task, red_task_id);
+
+    // For WSE-3, input queue to which our data task is bound must be bound to color red.
+    if (@is_arch("wse3")) @initialize_queue(iq, .{ .color = red });
+}
+\end{lstlisting}
+\end{frame}
+%%%%%
+\begin{frame}{Psuedo Image of task activation from another task}
+\begin{figure}
+    \includegraphics[scale=0.08]{img/localTaskActivation.png}
+\end{figure}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Code Template: link computations using Task}
+A data task (\lstinline|main_task|) activates a local task (\lstinline|foo_task|)
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+const red: color = @get_color(7);
+const iq: input_queue = @get_input_queue(2); // Used only on WSE-3
+
+const red_task_id: data_task_id =
+    if (@is_arch("wse3")) @get_data_task_id(iq)     else    @get_data_task_id(red);
+
+const foo_task_id: local_task_id = @get_local_task_id(8);
+
+var result: f32 = 0.0;  var sum: f32 = 0.0;
+
+task main_task(wavelet_data: f32) {
+    result = wavelet_data;
+    @activate(foo_task_id);     // special instructions to flip activation flag of foo_task
+}
+
+task foo_task() {   sum += result;  }
+
+comptime {
+    @bind_data_task(main_task, red_task_id);
+    // bind foo_task to the hardware to be managed 
+    @bind_local_task(foo_task, foo_task_id);
+    if (@is_arch("wse3")) @initialize_queue(iq, .{ .color = red });
+}
+\end{lstlisting}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Another use of wavelet arrival : Data Struct}
@@ -685,6 +766,21 @@ Here is the example of copying from multiple PEs.
     \end{itemize}
 \end{itemize}
 \end{columns}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Finally, Compile and run it!}
+\begin{enumerate}
+    \item compile device code \lstinline|layout.csl|
+\end{enumerate}
+\begin{lstlisting}[language=bash]
+
+\end{lstlisting}
+\begin{enumerate}\setcounter{enumi}{1}
+    \item run the host code \lstinline|run.py|
+\end{enumerate}
+\begin{lstlisting}[language=bash]
+
+\end{lstlisting}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{References}
