@@ -74,7 +74,7 @@
     task, function, extern, dsd, register, fabric, volatile, 
     struct, const, static, inline, uniform, comptime_struct
     blockid, peid, colorid, color, queue, numpes, numtids,
-    layout, runner, comptime
+    layout, runner, comptime, param, fn
   },
   morekeywords=[2]{
     @send_to_color, @send_to_host, @activate, @block, @unblock,
@@ -85,12 +85,13 @@
     @get_dsd, @get_dsr, @load_to_dsr, @get_ut_id,
     @set_rectangle, @set_tile_code, @import_module, @export_name, @get_color,
     @initialize_queue, @bind_data_task, @get_data_task_id, @get_input_queue, @get_output_queue,
-    @bind_local_task
+    @bind_local_task, @increment_dsd_offset, @get_local_task_id, @export_symbol,
+    @ set_color_config
   },
   morekeywords=[3]{
-    memcpy_d2h, load, run, launch, base_address, 
-    offset, stride, extent, tensor_access, width, height,
-    async, activate, element_type, fabric_color, output_queue, input_queue
+    memcpy_d2h, memcpy_d2h, .load, .run, .launch, .base_address, 
+    .offset, .stride, .extent, tensor_access, .width, .height, .memcpy_params, 
+    .async, .activate, .element_type, fabric_color, .output_queue, .input_queue
   }
   sensitive=true,               % 大文字小文字を区別
   morecomment=[l]{//},          % 行コメント
@@ -123,7 +124,7 @@
 % 目次スライド
 \begin{frame}
   \frametitle{Contents}
-  \tableofcontents
+  \tableofcontents[]
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Installation and Setup}
@@ -600,7 +601,7 @@ hardware \textbf{microthread} is an mechanism to distribute and manage hardware 
 [Details are \ulhref{https://sdk.cerebras.net/csl/language/microthreads_wse3}{Microthread IDs}, \ulhref{https://sdk.cerebras.net/csl/language/dsds\#language-dsds-async}{Async DSD Ops}]
 \vspace{-0.3\baselineskip}
 \begin{itemize}
-    \item Arbitration of hardware resource like ALU, Memory Access Unit, Router Interface ($\sim$ scheduling)
+    \item Arbitration of hardware resource like ALU, Memory Access Unit, Router Interface ($\sim$ scheduling) \uwave{in a PE}
     \item An asynchronous DSD operation can be assigned a \textbf{microthread ID} through \lstinline|.ut_id = @get_ut_id(n)|
     \begin{itemize}
         \item microthread ID could be different from input/output queue ID\footnote{In WSE2, the same as output queue ID when using \lstinline|fabs_dsd|, otherwise the same as input queue ID}
@@ -626,7 +627,7 @@ There have to be the hardware mechanism that utilize DSDs: \textbf{Data Structur
 \end{itemize}
 \end{frame}
 %%%%%
-\begin{frame}[fragile]{Communication via router: TODO for using DSD (preliminaries)}
+\begin{frame}[fragile]{Communication via router: TODO for using DSD (prelude)}
 \begin{columns}
 \column{0.48\textwidth}
 \begin{enumerate}
@@ -686,7 +687,7 @@ fn recv() void {
     });
     // accumulation of results
     @fxxx(result_dsd, result_dsd, in_dsd, .{
-        .async = true, .activate = exit_task_id 
+        .async = true, .activate = exit_task_id
     });
 }
 \end{lstlisting}
@@ -698,8 +699,63 @@ fn recv() void {
 \end{columns}
 \end{frame}
 %%%%%
-\begin{frame}{Code Template: link computation and communication using DSD}
+\begin{frame}[fragile]{Code Template: link computation and communication using DSD}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+// prelude (declare and receive params, designate Queue IDs., declare global memory, get dsds)
 
+// task ID used by a local task to unblock cmd stream
+const exit_task_id: local_task_id = @get_local_task_id(9);
+
+// memcpy module provides infrastructure for copying data and launching functions from the host
+const sys_mod = @import_module("<memcpy/memcpy>", memcpy_params);
+
+// define computation
+fn compute() void {
+    // loop over all columns of A
+    for (@range(i16, N_per_PE)) |i| {
+        @fxxx(y_dsd, y_dsd, A_dsd, x[i]);   // xxxx: adds, macs, muls, etc.
+        A_dsd = @increment_dsd_offset(A_dsd, M, f32); // move A_dsd to next column of A
+        // M is extent, f32 is type which specifies size occupied by an element
+    }
+}
+
+// define send handler and receive handler
+
+// link computation and communication
+fn link() void {
+    compute();
+    if (pe_id == 0){ send(); } else { recv(); }  // PE0 is a sender, PE1 is a receiver
+}
+\end{lstlisting}
+% fn send_right() void {
+%     const out_dsd = @get_dsd(fabout_dsd, .{...});
+%     @fmovs(out_dsd, y_dsd, .{...});
+% }
+% fn recv_left() void {
+%     const in_dsd = @get_dsd(fabin_dsd, .{...});
+%     @fadds(y_dsd, y_dsd, in_dsd, .{...})    // accumulation
+% }
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Code Template: link computation and communication using DSD}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+// ...
+
+// task that unblock cmd stream
+task exit_task() void { sys_mod.unblock_cmd_stream(); }
+
+comptime {
+    // link code of the task to the task id (which is recognized by hardware)
+    @bind_local_task(exit_task, exit_task_id);
+
+    // bind input/output queues to a color
+    @initialize_queue(oq_color, .{ .color = color })
+    @initialize_queue(iq_color, .{ .color = color })
+
+    @export_symbol(A_ptr, "A"); @export_symbol(x_ptr, "x"); @export_symbol(y_ptr, "y");
+    @export_symbol(link);
+}
+\end{lstlisting}
 \end{frame}
 %%%%%
 \begin{frame}{Learn by Example: overview of GEMV}
@@ -732,6 +788,13 @@ Let's distribute computation of \textbf{GE}neral \textbf{M}atrix-\textbf{V}ector
 % \end{columns}
 \end{frame}
 %%%%%
+\begin{frame}{Learn by example: copy host to device for GEMV}
+\vspace{-0.5\baselineskip}
+\begin{figure}
+    \includegraphics[scale=0.07]{img/csCopyh2d.png}
+\end{figure}
+\end{frame}
+%%%%%
 \begin{frame}{Learn by Example: pseudo image of computation for GEMV with 2 PEs}
 \begin{figure}
     \includegraphics[scale=0.065]{img/csGEMV1.png}
@@ -754,49 +817,82 @@ Let's distribute computation of \textbf{GE}neral \textbf{M}atrix-\textbf{V}ector
     \tableofcontents[currentsubsection]
 \end{frame}
 %%%%%
-\begin{frame}{Writing the top-level CSL file: basic}
+\begin{frame}{To complete the program: }
 There are a few things that programmers need for our device code to form a complete program
 \begin{itemize}
-    \item \textbf{Initialization the infrastructure of the \textit{memcpy} library} with \lstinline|@import_module|
-    \begin{itemize}
-        \item In order to allow the host to \textbf{launch kernels} and \textbf{copy data} to and from the device
-        \item has to specify \textbf{width} and \textbf{height} parameters which correspond to the \textbf{dimensions of the program rectangle}
-    \end{itemize}
     \item \textbf{A top-level “layout” file}
     \begin{itemize}
-        \item \textcolor{blue}{define the program rectangle} on which our kernel will run, with \lstinline|@set_rectangle(columns_dim, rows_dim)|
-        \item \textcolor{blue}{assign a code file} to the single PE in our rectangle, with \lstinline|@set_tile_code(column_idx, row_idx, "pe_program.csl" [, parameters])|
-        \item \textcolor{blue}{pass \textit{memcpy} parameters} as a parameter, which are parameterized by the PE's column number(idx), with \lstinline|.\{ .memcpy_params = memcpy.get_params(column_idx)\}|
+        \item \textcolor{blue}{setup all the PEs} used in the program
+    \end{itemize}
+    \item \textbf{The host code}
+    \begin{itemize}
+        \item written in \lstinline|python| language
+        \item \textcolor{blue}{launch kernels} and \textcolor{blue}{manage data \textbf{copy} to and from devices}
     \end{itemize}
 \end{itemize}
 \end{frame}
 %%%%%
-\begin{frame}{Writing the top-level CSL file: for communication}
-
+\begin{frame}[fragile]{Writing the top-level CSL file}
+\uline{Ahead of} \lstinline|layout {}|
+\begin{itemize}
+    \item \textbf{get colors} that will be used, with \lstinline|@get_color(n);|
+    \item \textbf{Initialize the infrastructure of the \textit{memcpy} library} with code below
+    \begin{itemize}
+        \item This allows the host to \textbf{launch kernels} and \textbf{copy data} to and from the device
+        \item has to specify \textbf{width} and \textbf{height} parameters which correspond to the \textbf{dimensions of the program rectangle}
+    \end{itemize}
+\end{itemize}
+\begin{lstlisting}[language=CSL]
+    const memcpy = @import_module("<memcpy/get_params>", .{ .width = 2, .height = 1 });
+\end{lstlisting}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Writing the top-level CSL file}
+\begin{columns}
+\vspace{0.3\baselineskip}
+\column{1.05\textwidth}
+\uline{Inside} \lstinline|layout {}|
+\begin{itemize}
+    \item \textbf{define the program rectangle} on which our kernel will run, with \lstinline|@set_rectangle(columns_dim, rows_dim)|
+    \item \textbf{assign a code file} to the single PE in our rectangle, with \lstinline|@set_tile_code(column_idx, row_idx, "pe_program.csl" [, parameters])|
+    \begin{itemize}
+        \item \textcolor{blue}{pass \textit{memcpy} parameters} as a parameter, which are parameterized by the PE's column number(idx), with \lstinline|.{ .memcpy_params = memcpy.get_params(column_idx)}|
+        \item pass other params for \textcolor{blue}{prelude} of \lstinline|pe_program.csl| like \lstinline|.pe_id|
+    \end{itemize}
+    \item \textbf{define physical path of the color around the PE}, with \lstinline|@set_color_config(col, row, color, .{.routes = .{...}});|
+    \begin{itemize}
+        \item As for \lstinline|routes| option, receive field \lstinline|.rx|, transmit field \lstinline|.tx| has to be specified
+        \item The value is choosen from \lstinline|RAMP, EAST, WEST, NORTH, SOUTH|
+    \end{itemize}
+    \item \textbf{export symbol names} from \lstinline|pe_program.csl|, with \lstinline|@export_name("?", [*]type)| 
+\end{itemize}
+\end{columns}
 \end{frame}
 %%%%%
 \begin{frame}[fragile]{Code template of the top-level CSL file}
 \begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
-// Import memcpy layout module for 1 x 1 grid of PEs
-const memcpy = @import_module("<memcpy/get_params>", 
-                                .{ .width = 1, .height = 1 });
+// Import memcpy layout module for 1 x 2 grid of PEs
+const memcpy = @import_module("<memcpy/get_params>", .{ .width = 2, .height = 1 });
+
+const color: color = @get_color(0)  // get color variable
 
 layout {
+    @set_rectangle(2, 1);   // Use 2 PEs (columns=2, rows=1)
 
-  // Use just one 1 PE (columns=1, rows=1)
-  @set_rectangle(1, 1);
+    /////////////////////////////// You should write this each for PEs
+    // Each PE should execute the code in "pe_program.csl" with params passed
+    @set_tile_code(0, 0, "pe_program.csl", .{ .memcpy_params = memcpy.get_params(0),
+                                            .sz = sz, .pe_id = 0, .color = color });
+    // define physical path of the color around the PE
+    @set_color_config(0, 0, color, .{.routes = .{ .rx = .{RAMP}, .tx = .{EAST} }});
+    /////////////////////////////// This is the template for setup a PE
 
-  // The lone PE in this program should execute the code in "pe_program.csl"
-  @set_tile_code(0, 0, 
-                    "pe_program.csl",
-                    .{ .memcpy_params = memcpy.get_params(0) });
+    @set_tile_code(0, 1, "pe_program..csl", .{...}); @set_color_config(0, 1, color, .{.routes = ... })
 
-  // Export device symbol for array "y"
-  // Last argument is mutability: host can read y, but not write to it
-  @export_name("y", [*]f32, false);
-
-  // Export host-callable device function
-  @export_name("init_and_compute", fn()void);
+    // Export device symbol names (this has to match @export_symbol in pe_program.csl)
+    @export_name("y", [*]f32, false);   // Last argument is mutability: host can read y, but not write to it
+    @export_name("A", [*]f32, false); @export_name("x", [*]f32, false); 
+    @export_name("init_and_compute", fn()void);
 }
 \end{lstlisting}
 \end{frame}
@@ -824,6 +920,16 @@ layout {
 \begin{frame}[fragile]{Writing the host code}
 \begin{enumerate}\setcounter{enumi}{3}
     \item \textbf{Copy input(s)} from host to device(s)
+    \begin{enumerate}
+        \item the symbol of destination on device \textcolor{orange}{\lstinline|A_symbol|}, the input data on the host is copied serially following the order \textcolor{orange}{\lstinline|A.transpose().ravel()|}
+        \begin{itemize}
+            \item \lstinline|ravel()| is similar to \lstinline|flatten|
+        \end{itemize}
+        \item To specify the location of rectangle of PEs from which to copy (called \textcolor{blue}{ROI})% Region of Interest
+        , give the northwest corner of the ROI \textcolor{orange}{\lstinline|0, 0|} and the width and height of the ROI \textcolor{orange}{\lstinline|2, 1|}
+        \item how many elements to copy back from each PE in the ROI \textcolor{orange}{\lstinline|M|} (if 2darray, \lstinline|M*N_per_PE|)
+        \item \textcolor{orange}{\lstinline|ROW_MAJOR|} specifies that the data is ordered by (height, width, element)
+    \end{enumerate}
 \end{enumerate}
 \begin{lstlisting}[language=CSL]
 A = np.arange(M*N, dtype=np.float32).reshape(M,N)
@@ -833,6 +939,13 @@ runner.memcpy_h2d(A_symbol, A.transpose().ravel(), 0, 0, 2, 1, M*N_per_PE,
     streaming=False, order=MemcpyOrder.ROW_MAJOR, 
     data_type=MemcpyDataType.MEMCPY_32BIT, nonblock=False)
 \end{lstlisting}
+\end{frame}
+%%%%%
+\begin{frame}{Learn by example: copy host to device for GEMV}
+\vspace{-0.5\baselineskip}
+\begin{figure}
+    \includegraphics[scale=0.07]{img/csCopyh2d.png}
+\end{figure}
 \end{frame}
 %%%%%
 \begin{frame}[fragile]{Writing the host code}
@@ -872,7 +985,8 @@ Here is the example of copying from multiple PEs.
     \item Configuration
     \begin{itemize}
         \item Size of ROI: \lstinline|height = 2|, \lstinline|width = 3|
-        \item Calculated Data in each PE 
+        \item Calculated Data in each PE
+        \item In each PE, \lstinline|mem1d_dsd| is used to manage data 
     \end{itemize}
 \end{itemize}
 \begin{lstlisting}[language=python]
@@ -900,23 +1014,21 @@ Here is the example of copying from multiple PEs.
 \begin{frame}[fragile]{Finally, Compile and run it!}
 \begin{enumerate}
     \item compile device code \lstinline|layout.csl|
+    \begin{itemize}
+        \item \lstinline|--fabric-dims| flag must match your program's PEs' fabric dimensions
+        \item \lstinline|--fabric-offsets| flag specifies the northeast corner of mapping location (mainly for compiling multiple files)
+        \item \lstinline|--channels| specifies the number of colors used in the program
+    \end{itemize}
 \end{enumerate}
 \begin{lstlisting}[language=bash]
-
+$ cslc layout.csl --fabric-dims=9,3 --fabric-offsets=4,1 --params=M:4,N:6 --memcpy --channels=1 -o out
 \end{lstlisting}
 \begin{enumerate}\setcounter{enumi}{1}
     \item run the host code \lstinline|run.py|
 \end{enumerate}
 \begin{lstlisting}[language=bash]
-
+$ cs_python run.py --name out
 \end{lstlisting}
-\end{frame}
-%%%%%
-\begin{frame}{Learn by example: copy host to device for GEMV}
-\vspace{-0.5\baselineskip}
-\begin{figure}
-    \includegraphics[scale=0.07]{img/csCopyh2d.png}
-\end{figure}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{References}
