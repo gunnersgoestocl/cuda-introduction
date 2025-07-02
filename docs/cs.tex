@@ -84,13 +84,13 @@
     @fetch, @push, @pop, @peek, @capacity, @fill,
     @get_dsd, @get_dsr, @load_to_dsr, @get_ut_id,
     @set_rectangle, @set_tile_code, @import_module, @export_name, @get_color,
-    @initialize_queue, @bind_data_task, @get_data_task_id, @get_input_queue,
+    @initialize_queue, @bind_data_task, @get_data_task_id, @get_input_queue, @get_output_queue,
     @bind_local_task
   },
   morekeywords=[3]{
     memcpy_d2h, load, run, launch, base_address, 
     offset, stride, extent, tensor_access, width, height,
-    async, activate, element_type
+    async, activate, element_type, fabric_color, output_queue, input_queue
   }
   sensitive=true,               % 大文字小文字を区別
   morecomment=[l]{//},          % 行コメント
@@ -325,6 +325,11 @@ Subprogram has two \textbf{types} (declaration).
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Communication}
 %%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \tableofcontents[currentsubsection]
+\end{frame}
+%%%%%
 \begin{frame}{The unit of communication between PEs: wavelet}
 $32$-bit messages ($\sim$ packets), called \textbf{wavelet}s, can be sent to or received by neighboring PEs \textcolor{blue}{in a single clock cycle}.
 \begin{itemize}
@@ -359,7 +364,7 @@ The virtual communication path (channel) through which \textbf{wavelet}s (packet
 %%%%%
 \begin{frame}
     \frametitle{Contents}
-    \tableofcontents[currentsubsection, hideothersubsections]
+    \tableofcontents[currentsubsection]
 \end{frame}
 %%%%%
 \begin{frame}{Task IDs and Types of Tasks}
@@ -486,7 +491,7 @@ comptime {
 \end{lstlisting}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Another use of wavelet arrival : Data Struct}
+\subsection{Management of data which wavelets deliver : Data Struct Descriptor}
 %%%%%
 \begin{frame}
     \frametitle{Contents}
@@ -559,7 +564,7 @@ CSL supports several \textbf{tensor ops}
         \item a chunk of memory (or)
         \item a sequence of incoming or outgoing wavelets
     \end{itemize}
-    \item enable various \textcolor{blue}{repeated operations} to be expressed using just \textcolor{blue}{one hardware instruction}
+    \item enable various \textcolor{blue}{repeated operations} (like \textbf{tensor ops}) to be expressed using just \textcolor{blue}{one hardware instruction}
     \item is an software object which consists of
     \begin{itemize}
         \item \lstinline|dst_type|: one of \lstinline|mem1d_dsd|, \lstinline|mem4d_dsd|, \lstinline|fabin_dsd|, or \lstinline|fabout_dsd|
@@ -621,19 +626,125 @@ There have to be the hardware mechanism that utilize DSDs: \textbf{Data Structur
 \end{itemize}
 \end{frame}
 %%%%%
-\begin{frame}{Communication via router: DSD}
+\begin{frame}[fragile]{Communication via router: TODO for using DSD (preliminaries)}
 \begin{columns}
 \column{0.48\textwidth}
-sender
 \begin{enumerate}
-    \item set colors used to send/recv data between PEs
-    \item assign task ID used by a local task to unblock cmd stream
+    \item declare and receive params \lstinline|pe_id|, \lstinline|color|, size parameters (designated in the top-level \lstinline|layout.csl|)
 \end{enumerate}
+\column{0.48\textwidth}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+param memcpy_params: comptime_struct;
+// Size params (Matrix dimensions)
+param M: i16;   param N_per_PE: i16;
+// ID of PE (0 is left, 1 is right)
+param pe_id: i16;
+// Colors used to send/recv data between PEs
+param send_color: color;
+\end{lstlisting}
+\end{columns}\vspace{-0.7\baselineskip}
+\begin{columns}
+\column{1.05\textwidth}
+\begin{enumerate}\setcounter{enumi}{1}
+    \item designate \textbf{Queue IDs} with \lstinline|@get_output_queue()| for sender, \lstinline|@get_input_queue()| for receiver
+    \item declare of global\footnote{which does not mean device memory in NVIDIA GPU, but the antonyms for "local memory for a function"} memory \lstinline|var var_name: [num_elements]type;|
+    \item get DSDs for accessing variables for operations with \lstinline|@get_dsd(format, .{ .base_address=&var_name, .extent= .. })|\footnote{\lstinline|extent| specifies the range length of the data handled by a single instruction}
+    \item declare pointers to data of variables for advertising them as symbols to host \lstinline|var var_name_ptr: [*]type = &var_name;|
+\end{enumerate}
+\end{columns}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Communication via router: TODO for using DSD (sender-receiver)}
+\begin{columns}
+\column{0.48\textwidth}
+\uline{send handler definition}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+fn send() void {
+    const out_dsd = @get_dsd(fabout_dsd, .{
+        .fabric_color = color, .extent = sz
+        .output_queue = oq_color
+    });
+    // copy to the fabric router (output queue)
+    @fmovs(out_dsd, result_dsd, .{
+        .async = true, .activate = exit_task_id 
+    });
+}
+\end{lstlisting}
+\begin{itemize}
+    \item have to declare \lstinline|fabout_dsd| type
+    \item link to communication channel \lstinline|color| (is declared in \lstinline|layout.csl|)
+    \item assign an output queue \lstinline|oq_color| previously linked to \lstinline|color|
+\end{itemize}
+%%%
+\column{0.48\textwidth}
+\uline{receive handler definition}
+\begin{lstlisting}[language=CSL, basicstyle=\ttfamily\tiny]
+fn recv() void {
+    const in_dsd = @get_dsd(fabin_dsd, .{
+        .fabric_color = color, .extent = sz
+        .input_queue = iq_color
+    });
+    // accumulation of results
+    @fxxx(result_dsd, result_dsd, in_dsd, .{
+        .async = true, .activate = exit_task_id 
+    });
+}
+\end{lstlisting}
+\begin{itemize}
+    \item have to declare \lstinline|fabin_dsd| type
+    \item link to communication channel \lstinline|color| (is declared in \lstinline|layout.csl|)
+    \item assign an input queue \lstinline|iq_color| previously linked to \lstinline|color|
+\end{itemize}
 \end{columns}
 \end{frame}
 %%%%%
 \begin{frame}{Code Template: link computation and communication using DSD}
 
+\end{frame}
+%%%%%
+\begin{frame}{Learn by Example: overview of GEMV}
+Let's distribute computation of \textbf{GE}neral \textbf{M}atrix-\textbf{V}ector multiplication (\lstinline|y = A@x + b|)!
+% \begin{columns}
+% \column{0.47\textwidth}
+\begin{itemize}
+    \item Configuration: \lstinline|A| is an (M, N) \textcolor{blue}{matrix}, \lstinline|x| is an (N) \textcolor{blue}{vector}, \lstinline|b| is an (M) \textcolor{blue}{vector}
+    \begin{itemize}
+        \item $\{y_m = \sum_{n=0}^{N-1}A_{m,n}x_n = \sum_{e=0}^{N/\mathtt{N_{per}PE}}\sum_{n'=0}^{\mathtt{N_{per}PE}}A_{m,(e*\mathtt{N_{per}PE}+n')}x_{e*\mathtt{N_{per}PE}+n'}\}_{m=0,.., M-1}$
+    \end{itemize}
+    \item computation is distributed into \lstinline|N / N_per_PE| PEs without synchronization
+    \begin{itemize}
+        \item \lstinline|e|th PE is assigned to $\sum_{n'=0}^{\mathtt{N_{per}PE}}A_{m,(e*\mathtt{N_{per}PE}+n')}x_{e*\mathtt{N_{per}PE}+n'}$
+        \item thus, \lstinline|e|th PE will receive \textcolor{blue}{fragment} of \lstinline|A|, \lstinline|x| each:
+        \begin{itemize}
+            \item submatrix: $\{A_{m,(e*\mathtt{N_{per}PE})}:A_{m,((e+1)*\mathtt{N_{per}PE})}\}_{m=0, .., M-1}$
+            \item subvector: $x_{(e*\mathtt{N_{per}PE})}:x_{((e+1)*\mathtt{N_{per}PE})}$
+        \end{itemize}
+        \item Only \lstinline|0|th PE will receive \textcolor{blue}{bias} \lstinline|b| for accumulation
+    \end{itemize}
+    \item after finishing computation in each PE, the result is \textbf{sent up to the fabric} (router), then \textbf{transmit it to the designated PE}.
+    \item The designated PE which gathers the results from each PE is responsible for 
+    \begin{itemize}
+        \item \textbf{accumulating} them (eg. \lstinline|sum|, \lstinline|ave|)
+        \item \textbf{copying back} to host (the host code is responsible here)
+    \end{itemize}
+\end{itemize}
+% \column{0.47\textwidth}
+% \end{columns}
+\end{frame}
+%%%%%
+\begin{frame}{Learn by Example: pseudo image of computation for GEMV with 2 PEs}
+\begin{figure}
+    \includegraphics[scale=0.065]{img/csGEMV1.png}
+    \caption{Compute independently}
+\end{figure}
+\end{frame}
+%%%%%
+\begin{frame}{Learn by Example: pseudo image of communication for GEMV with 2 PEs}
+\vspace{-\baselineskip}
+\begin{figure}
+    \includegraphics[scale=0.063]{img/csGEMVsendrecv.png}
+    \caption{Send result from PE0 to PE1 and merge}
+\end{figure}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{layout and host code}
@@ -643,7 +754,7 @@ sender
     \tableofcontents[currentsubsection]
 \end{frame}
 %%%%%
-\begin{frame}{Writing the top-level CSL file}
+\begin{frame}{Writing the top-level CSL file: basic}
 There are a few things that programmers need for our device code to form a complete program
 \begin{itemize}
     \item \textbf{Initialization the infrastructure of the \textit{memcpy} library} with \lstinline|@import_module|
@@ -658,6 +769,10 @@ There are a few things that programmers need for our device code to form a compl
         \item \textcolor{blue}{pass \textit{memcpy} parameters} as a parameter, which are parameterized by the PE's column number(idx), with \lstinline|.\{ .memcpy_params = memcpy.get_params(column_idx)\}|
     \end{itemize}
 \end{itemize}
+\end{frame}
+%%%%%
+\begin{frame}{Writing the top-level CSL file: for communication}
+
 \end{frame}
 %%%%%
 \begin{frame}[fragile]{Code template of the top-level CSL file}
@@ -701,13 +816,27 @@ layout {
     \item \textbf{Load and Run device kernel} (named \lstinline|init_and_compute| here)
     \begin{itemize}
         \item Before loading the program, get symbol for copying \textit{y} result off device
-        \item \lstinline|runner.load()| → \lstinline|runner.run()| → \lstinline|runner.launch('init_and_compute' [, option])|
+        \item \lstinline|runner.load()| → \lstinline|runner.run()| →..→ \lstinline|runner.launch('init_and_compute' [, option])|
     \end{itemize}
 \end{enumerate}
 \end{frame}
 %%%%%
 \begin{frame}[fragile]{Writing the host code}
 \begin{enumerate}\setcounter{enumi}{3}
+    \item \textbf{Copy input(s)} from host to device(s)
+\end{enumerate}
+\begin{lstlisting}[language=CSL]
+A = np.arange(M*N, dtype=np.float32).reshape(M,N)
+N_per_PE = N //2
+A_symbol = runner.get_id('A')
+runner.memcpy_h2d(A_symbol, A.transpose().ravel(), 0, 0, 2, 1, M*N_per_PE, 
+    streaming=False, order=MemcpyOrder.ROW_MAJOR, 
+    data_type=MemcpyDataType.MEMCPY_32BIT, nonblock=False)
+\end{lstlisting}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Writing the host code}
+\begin{enumerate}\setcounter{enumi}{4}
     % \item \small\textbf{Import libraries} which is required
     % \item \small\textbf{Instantiate (=construct) runner objects} with two arguments % after Specify paths to compiled code and 
     % \item \small\textbf{Load and Run device kernel} (named \lstinline|init_and_compute| here)
@@ -781,6 +910,13 @@ Here is the example of copying from multiple PEs.
 \begin{lstlisting}[language=bash]
 
 \end{lstlisting}
+\end{frame}
+%%%%%
+\begin{frame}{Learn by example: copy host to device for GEMV}
+\vspace{-0.5\baselineskip}
+\begin{figure}
+    \includegraphics[scale=0.07]{img/csCopyh2d.png}
+\end{figure}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{References}
