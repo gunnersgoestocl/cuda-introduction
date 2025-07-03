@@ -1,0 +1,12 @@
+rm -f  matmul_multistream
+nvcc -arch=sm_90 matmul_multistream.cu -o matmul_multistream
+行列サイズ: 2^20 = 1048576 要素（4.00 MB）
+グリッドサイズ: 4096 ブロック、ブロックサイズ: 256 スレッド
+使用するストリーム数: 4
+
+実行時間比較:
+1. 複数ストリームでGridを分散[順次実行] (4 ストリーム): 1.394 ms
+2. 複数ストリームでGridを分散[並列実行] (4 ストリーム): 0.130 ms
+3. 単一ストリームにGridを載せ: 0.061 ms
+4. 一つのGridにまとめて計算 : 0.057 ms
+最新の結果は latest_result.txt でも確認できます

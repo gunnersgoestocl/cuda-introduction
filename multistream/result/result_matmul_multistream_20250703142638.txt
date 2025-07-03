@@ -1,0 +1,49 @@
+rm -f  matmul_multistream scal_multistream
+nvcc -arch=sm_90 matmul_multistream.cu -o matmul_multistream
+matmul_multistream.cu(298): warning #177-D: variable "baseTime" was declared but never referenced
+          float baseTime = 0.0f;
+                ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+nvcc -arch=sm_90 scal_multistream.cu -o scal_multistream
+=== CUDA ストリーム並列化ベンチマーク ===
+行列サイズ: 512x512
+バッチ数: 8
+ストリーム数: 4
+メモリ使用量: 24 MB
+
+ウォームアップ中...
+
+=== ベンチマーク実行 ===
+単一ストリーム(逐次実行): 0.722623 ms
+複数ストリーム(パイプライン): 0.458335 ms
+速度向上: 1.57663x
+
+=== 詳細な時間分析 ===
+Batch 0 (Stream 0): H2D=0.020ms, Kernel=0.076ms, D2H=0.016ms, Total=0.114ms
+Batch 1 (Stream 1): H2D=0.017ms, Kernel=0.111ms, D2H=0.014ms, Total=0.144ms
+Batch 2 (Stream 2): H2D=0.024ms, Kernel=0.139ms, D2H=0.013ms, Total=0.178ms
+Batch 3 (Stream 3): H2D=0.028ms, Kernel=0.174ms, D2H=0.012ms, Total=0.216ms
+Batch 4 (Stream 0): H2D=0.021ms, Kernel=0.159ms, D2H=0.017ms, Total=0.199ms
+
+平均時間 (全8バッチ):
+  H2D転送: 0.022 ms
+  カーネル実行: 0.140 ms
+  D2H転送: 0.014 ms
+  合計: 0.175 ms
+
+=== 並列度の分析 ===
+最大重複時間: 0.165 ms
+並列効率: 3.165x
+
+=== TIMELINE_DATA_START ===
+BATCH,0,0,0.000,0.020,0.096,0.112,0.114
+BATCH,1,1,0.019,0.036,0.147,0.161,0.163
+BATCH,2,2,0.036,0.059,0.198,0.211,0.213
+BATCH,3,3,0.048,0.076,0.250,0.262,0.264
+BATCH,4,0,0.116,0.136,0.295,0.312,0.314
+BATCH,5,1,0.165,0.184,0.344,0.360,0.362
+BATCH,6,2,0.215,0.235,0.392,0.402,0.403
+BATCH,7,3,0.266,0.290,0.435,0.446,0.448
+=== TIMELINE_DATA_END ===

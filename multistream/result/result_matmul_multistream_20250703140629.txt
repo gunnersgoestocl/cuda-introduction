@@ -1,0 +1,32 @@
+rm -f  matmul_multistream scal_multistream
+nvcc -arch=sm_90 matmul_multistream.cu -o matmul_multistream
+nvcc -arch=sm_90 scal_multistream.cu -o scal_multistream
+=== CUDA ストリーム並列化ベンチマーク ===
+行列サイズ: 24x24
+バッチ数: 4
+ストリーム数: 4
+メモリ使用量: 0 MB
+
+ウォームアップ中...
+
+=== ベンチマーク実行 ===
+単一ストリーム(逐次実行): 0.123168 ms
+複数ストリーム(パイプライン): 0.07968 ms
+速度向上: 1.54578x
+
+=== 詳細な時間分析 ===
+Batch 0 (Stream 0): H2D=0.011ms, Kernel=0.008ms, D2H=0.007ms, Total=0.027ms
+Batch 1 (Stream 1): H2D=0.008ms, Kernel=0.006ms, D2H=0.006ms, Total=0.023ms
+Batch 2 (Stream 2): H2D=0.007ms, Kernel=0.007ms, D2H=0.006ms, Total=0.023ms
+Batch 3 (Stream 3): H2D=0.009ms, Kernel=0.008ms, D2H=0.009ms, Total=0.028ms
+
+平均時間 (全4バッチ):
+  H2D転送: 0.009 ms
+  カーネル実行: 0.007 ms
+  D2H転送: 0.007 ms
+  合計: 0.023 ms
+
+=== 並列度の分析 ===
+最大重複時間: 0.011 ms
+並列効率: 1.453x
+最新の結果は latest_result.txt でも確認できます

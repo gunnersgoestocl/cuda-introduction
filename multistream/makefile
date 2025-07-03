@@ -8,10 +8,10 @@ NVCCFLAGS_MPI := -arch=sm_90 -O3 -I$(OMPI_INC) -L$(LIBRARY_PATH)
 C_EXECUTABLES := $(patsubst %.c,%,$(wildcard *.c))
 
 # .cu ファイルから実行ファイルを生成
-CUDA_EXECUTABLES := $(patsubst %.cu,%,$(filter-out matmul_multinode.cu,$(wildcard *.cu)))
+CUDA_EXECUTABLES := $(patsubst %.cu,%,$(wildcard *.cu))
 
 # デフォルトのターゲット
-all: $(C_EXECUTABLES) $(CUDA_EXECUTABLES) matmul_multinode
+all: $(C_EXECUTABLES) $(CUDA_EXECUTABLES)
 
 # .c ファイルから実行ファイルを生成するルール
 %: %.c
@@ -21,11 +21,7 @@ all: $(C_EXECUTABLES) $(CUDA_EXECUTABLES) matmul_multinode
 %: %.cu
 	$(NVCC) $(NVCCFLAGS) $< -o $@
 
-# MPI+CUDAのコンパイル
-matmul_multinode: matmul_multinode.cu
-	$(NVCC) $(NVCCFLAGS_MPI) $< -o $@ -lmpi
-
 # clean ターゲットの定義
 .PHONY: clean
 clean:
-	rm -f $(C_EXECUTABLES) $(CUDA_EXECUTABLES) matmul_multinode
+	rm -f $(C_EXECUTABLES) $(CUDA_EXECUTABLES)
