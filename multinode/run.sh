@@ -30,8 +30,9 @@ RESULT_FILE="result_multinode_${TIMESTAMP}.txt"
 mpirun -n ${NUM_NODES} ./matmul_multinode ${MATRIX_SIZE_POWER}
 
 # move result and attach symbolic link
-mv latest_result.txt "result/${RESULT_FILE}"
-cd result
-ln -sf ${RESULT_FILE} ../latest_result.txt
-cd ..
-echo "最新の結果は latest_result.txt でも確認できます"
+if [ $? -eq 0 ]; then
+	mv latest_result.txt "result/${RESULT_FILE}"
+else
+    echo "multinode の実行中にエラーが発生しました。" >&2
+    exit 1
+fi

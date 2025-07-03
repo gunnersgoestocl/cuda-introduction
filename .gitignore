@@ -13,3 +13,6 @@
 .DS_Store
 .vscode/
 cuda.pdf
+__pycache/
+*.pyc
+venv/
