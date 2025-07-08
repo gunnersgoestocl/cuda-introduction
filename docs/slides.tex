@@ -898,9 +898,9 @@ __global__ void transpose_read_coalesced(
 %
 %\end{frame}
 %%%%%%%%
-%\begin{frame}{Optimized matmul program}
-%
-%\end{frame}
+\begin{frame}{Using Tensor Core}
+
+\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Practice Problems}
 %%%%%%%%%
@@ -949,16 +949,17 @@ __global__ void transpose_read_coalesced(
 \end{frame}
 %%%%%%%
 \section{Appendices}
-%%%%%
-\begin{frame}{Contents}
-  \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
-    \item \textcolor{What is CUDA?: Introduction}
-    \item \textcolor{gray}{A CUDA program for beginners}
-    \item \textcolor{gray}{How CUDA works}
-    \item \textcolor{gray}{Optimize CUDA program}
-    \item \textcolor{gray}{Practice Problems}
-  \end{enumerate}
-\end{frame}
+% %%%%%
+% \begin{frame}{Contents}
+%   \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
+%     \item \textcolor{gray}{What is CUDA?: Introduction}
+%     \item \textcolor{gray}{A CUDA program for beginners}
+%     \item \textcolor{gray}{How CUDA works}
+%     \item \textcolor{gray}{Optimize CUDA program}
+%     \item \textcolor{gray}{Practice Problems}
+%     \item Appendices
+%   \end{enumerate}
+% \end{frame}
 %%%%%
 \begin{frame}{Compute Capability of H100 GPU}
   \begin{figure}
@@ -1046,7 +1047,6 @@ module lsu(
 %%%%%
 \begin{frame}[fragile]{(Auxiliary) Hardware implementation of LSU}
   \vspace{-1.5\baselineskip}
-%  \begin{block}{}
     \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
   /* W-stage */
   always @(*) begin
@@ -1077,7 +1077,6 @@ module lsu(
     end else begin l_data = 32'b0; end
   end
 \end{lstlisting}
-%\end{block}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{References}
