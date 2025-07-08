@@ -1,0 +1,86 @@
+/work/opt/local/aarch64/cores/cuda/12.6/bin/nvcc
+rm -f tensor_core_nv *.o *.ptx *.sass
+nvcc -O3 -arch=sm_90 -std=c++17 tensor_core_nv.cu -o tensor_core_nv
+cuobjdump -ptx tensor_core_nv > tensor_core_nv_202507081723.ptx
+cuobjdump --dump-sass tensor_core_nv > tensor_core_nv_202507081723.sass
+PTXファイル生成完了: tensor_core_nv_202507081723.ptx
+SASSファイル生成完了: tensor_core_nv_202507081723.sass
+TensorCore関連命令の検索結果:
+wmma.load.a.sync.aligned.row.m16n16k16.global.f16 {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, [%rd10], %r28;
+wmma.load.b.sync.aligned.col.m16n16k16.global.f16 {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, [%rd12], %r27;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd19], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r27;
+wmma.load.a.sync.aligned.row.m16n16k16.shared.f16 {%r27, %r28, %r29, %r30, %r31, %r32, %r33, %r34}, [%r93], %r92;
+wmma.load.b.sync.aligned.col.m16n16k16.shared.f16 {%r35, %r36, %r37, %r38, %r39, %r40, %r41, %r42}, [%r94], %r92;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f66, %f65, %f64, %f63, %f62, %f61, %f60, %f59}, {%r27, %r28, %r29, %r30, %r31, %r32, %r33, %r34}, {%r35, %r36, %r37, %r38, %r39, %r40, %r41, %r42}, {%f66, %f65, %f64, %f63, %f62, %f61, %f60, %f59};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd27], {%f66, %f65, %f64, %f63, %f62, %f61, %f60, %f59}, %r45;
+Generating PTX and SASS files...
+renamed 'tensor_core_nv_20250708172351.ptx' -> 'ptx/tensor_core_nv_20250708172351.ptx'
+renamed 'tensor_core_nv_20250708172351.sass' -> 'sass/tensor_core_nv_20250708172351.sass'
+PTXファイル生成完了: ptx/tensor_core_nv_20250708172351.ptx
+SASSファイル生成完了: sass/tensor_core_nv_20250708172351.sass
+TensorCore関連命令の検索結果:
+
+=== 実行結果 ===
+Using GPU: NVIDIA GH200 120GB (Compute Capability 9.0)
+GPU Clock Rate: 1.98 GHz
+Tensor Core support detected!
+Initializing matrices...
+Computing reference solution on CPU...
+Warming up GPU...
+Running benchmarks (5 iterations)...
+  Run 1/5
+  Run 2/5
+  Run 3/5
+  Run 4/5
+  Run 5/5
+Validating results...
+Mismatch at (0, 0): GPU=206.377365, CPU=206.690445
+Mismatch at (0, 0): GPU=206.377365, CPU=206.690445
+
+===== Detailed Performance Results (clock64()を使用) =====
+Matrix Size: 1024 x 1024 x 1024
+CPU Time: 2.827440 seconds
+
+--- Tensor Core (Global Memory) (FAILED) ---
+Total Time: 0.006573 seconds
+  Copy H->D:     0.000033 seconds (0.5%)
+  Kernel Total:  0.000090 seconds (1.4%)
+    Global->Frag:  0.000000148 seconds
+    Compute:       0.000000421 seconds
+    Store:         0.000000053 seconds
+  Copy D->H:     0.000021 seconds (0.3%)
+
+--- Tensor Core (Shared Memory) (FAILED) ---
+Total Time: 0.008706 seconds
+  Copy H->D:     0.000034 seconds (0.4%)
+  Kernel Total:  0.000339 seconds (3.9%)
+    Global->Shared:  0.000003766 seconds
+    Shared->Frag:    0.000000060 seconds
+    Compute:         0.000000044 seconds
+    Store:           0.000000127 seconds
+    Sync Overhead:   0.000000076 seconds
+  Copy D->H:     0.000022 seconds (0.2%)
+
+===== Phase Comparison (Global vs Shared) =====
+Total Kernel Time: 3.77x slower with shared memory
+Data Loading:      25.93x slower with shared memory
+Computation:       0.10x different with shared memory
+Result Storage:    2.42x different with shared memory
+
+===== Detailed Analysis =====
+Shared Memory Overhead: 0.000003678 seconds
+  - Global->Shared:     0.000003766 seconds
+  - Shared->Frag:       0.000000060 seconds
+  - Direct Global->Frag: 0.000000148 seconds
+Synchronization Overhead: 0.000000076 seconds (0.0% of shared kernel time)
+Compute Performance:
+  - Global Memory: 5105.69 TFLOPS
+  - Shared Memory: 48873.77 TFLOPS
+
+=== 実験完了 ===
+タイムスタンプ: 20250708172351
+ソースコード: src/tensor_core_nv_20250708172351.cu
+PTXコード: ptx/tensor_core_nv_20250708172351.ptx
+SASSコード: sass/tensor_core_nv_20250708172351.sass
+実行結果: result/result_20250708172351.txt

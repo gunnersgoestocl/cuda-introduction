@@ -41,13 +41,10 @@ typedef struct {
     float global_to_frag_time;   // グローバルメモリ→フラグメント時間
     float global_to_shared_time; // グローバルメモリ→共有メモリ時間
     float shared_to_frag_time;   // 共有メモリ→フラグメント時間
-    float compute_time;          // 総計算時間
+    float compute_time;          // 計算時間
     float store_time;            // 結果の書き戻し時間
     float copy_out_time;         // デバイス→ホストのコピー時間
     float sync_overhead;         // 同期オーバーヘッド
-    // 付加情報
-    float single_step_compute_time; // 1ステップ分の計算時間
-    float single_load_time;         // 1回のロード時間
 } TimingInfo;
 
 // 時間計測結果を格納する構造体（デバイス用）
@@ -64,46 +61,31 @@ typedef struct {
     uint64_t shared_to_frag_end;
     uint64_t compute_start;
     uint64_t compute_end;
-    uint64_t total_compute_start;   // 全体の計算開始時刻
-    uint64_t total_compute_end;     // 全体の計算終了時刻
     uint64_t store_start;
     uint64_t store_end;
     uint64_t sync1_start;
     uint64_t sync1_end;
     uint64_t sync2_start;
     uint64_t sync2_end;
-    // 最小粒度での計算時間（付加情報）
-    uint64_t single_step_compute_start;
-    uint64_t single_step_compute_end;
-    uint64_t single_load_start;
-    uint64_t single_load_end;
 } DeviceTimingInfo;
 
 // 行列初期化
-void init_matrices(half *A, half *B, float *C_tc, float *C_tc_shared, 
-                  float *C_cuda_global, float *C_cuda_shared, float *C_ref) {
-    // 入力行列Aの初期化
+void init_matrices(half *A, half *B, float *C) {
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < K; j++) {
             A[i * K + j] = __float2half((rand() % 10) / 10.0f);
         }
     }
 
-    // 入力行列Bの初期化
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < N; j++) {
             B[i * N + j] = __float2half((rand() % 10) / 10.0f);
         }
     }
 
-    // 全ての結果行列を初期化（要求時ページングを避けるため）
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < N; j++) {
-            C_tc[i * N + j] = 0.0f;
-            C_tc_shared[i * N + j] = 0.0f;
-            C_cuda_global[i * N + j] = 0.0f;
-            C_cuda_shared[i * N + j] = 0.0f;
-            C_ref[i * N + j] = 0.0f;
+            C[i * N + j] = 0.0f;
         }
     }
 }
@@ -168,18 +150,13 @@ __global__ void tensor_core_global_memory_kernel(half *A, half *B, float *C,
         timing_info->fragment_init_end = clock64();
     }
     
-    // 総計算時間測定開始
-    if (is_measuring_thread) {
-        timing_info->total_compute_start = clock64();
-    }
-    
     // K次元の各ステップでデータを計算
     for (int i = 0; i < k; i += WMMA_K) {
         if (i + WMMA_K > k) break;
         
-        // 最初のステップでのロード時間測定（付加情報）
+        // グローバルメモリからフラグメントへのロード時間測定開始
         if (is_measuring_thread && i == 0) {
-            timing_info->single_load_start = clock64();
+            timing_info->global_to_frag_start = clock64();
         }
         
         // Aフラグメントをグローバルメモリから直接ロード
@@ -188,28 +165,23 @@ __global__ void tensor_core_global_memory_kernel(half *A, half *B, float *C,
         // Bフラグメントをグローバルメモリから直接ロード
         nvcuda::wmma::load_matrix_sync(b_frag, B + (i * n + col_start), n);
         
-        // 最初のステップでのロード時間測定終了（付加情報）
+        // グローバルメモリからフラグメントへのロード時間測定終了
         if (is_measuring_thread && i == 0) {
-            timing_info->single_load_end = clock64();
+            timing_info->global_to_frag_end = clock64();
         }
         
-        // 最初のステップでの計算時間測定開始（付加情報）
+        // 計算時間測定開始
         if (is_measuring_thread && i == 0) {
-            timing_info->single_step_compute_start = clock64();
+            timing_info->compute_start = clock64();
         }
         
         // 行列乗算を実行（TensorCore命令を使用）
         nvcuda::wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
         
-        // 最初のステップでの計算時間測定終了（付加情報）
+        // 計算時間測定終了
         if (is_measuring_thread && i == 0) {
-            timing_info->single_step_compute_end = clock64();
+            timing_info->compute_end = clock64();
         }
-    }
-    
-    // 総計算時間測定終了
-    if (is_measuring_thread) {
-        timing_info->total_compute_end = clock64();
     }
     
     // 結果の書き戻し時間測定開始
@@ -231,8 +203,9 @@ __global__ void tensor_core_shared_memory_kernel(half *A, half *B, float *C,
                                                int m, int n, int k,
                                                DeviceTimingInfo *timing_info) {
     // 共有メモリのパディング（16バイトアライメントを維持）
-    const int padded_k = (WMMA_K + 8) & ~0xF;
-    const int padded_n = (WMMA_N + 8) & ~0xF;
+    // パディングサイズをWMMA_Kの倍数に調整
+    const int padded_k = (WMMA_K + 8) & ~0xF; // 16の倍数になるようにパディング
+    const int padded_n = (WMMA_N + 8) & ~0xF; // 16の倍数になるようにパディング
     
     // アライメントを保ったパディング付き共有メモリ
     __shared__ half shared_A[WMMA_M][padded_k];
@@ -283,18 +256,13 @@ __global__ void tensor_core_shared_memory_kernel(half *A, half *B, float *C,
         timing_info->fragment_init_end = clock64();
     }
     
-    // 総計算時間測定開始（全K次元ループのみ、ストアは含めない）
-    if (is_measuring_thread) {
-        timing_info->total_compute_start = clock64();
-    }
-    
     // K次元の各ステップでデータを計算
     for (int i = 0; i < k; i += WMMA_K) {
         if (i + WMMA_K > k) break;
         
-        // 最初のステップでのロード時間測定開始（付加情報）
+        // グローバルメモリから共有メモリへのロード時間測定開始
         if (is_measuring_thread && i == 0) {
-            timing_info->single_load_start = clock64();
+            timing_info->global_to_shared_start = clock64();
         }
         
         // 各スレッドが複数の要素をロード
@@ -318,41 +286,66 @@ __global__ void tensor_core_shared_memory_kernel(half *A, half *B, float *C,
             }
         }
         
+        // グローバルメモリから共有メモリへのロード時間測定終了
+        if (is_measuring_thread && i == 0) {
+            timing_info->global_to_shared_end = clock64();
+        }
+        
+        // 同期1時間測定開始
+        if (is_measuring_thread && i == 0) {
+            timing_info->sync1_start = clock64();
+        }
+        
         // 同期 - すべてのスレッドがデータをロードするまで待機
         __syncthreads();
+        
+        // 同期1時間測定終了
+        if (is_measuring_thread && i == 0) {
+            timing_info->sync1_end = clock64();
+        }
+        
+        // 共有メモリからフラグメントへのロード時間測定開始
+        if (is_measuring_thread && i == 0) {
+            timing_info->shared_to_frag_start = clock64();
+        }
         
         // 共有メモリからフラグメントにロード
         nvcuda::wmma::load_matrix_sync(a_frag, &shared_A[0][0], padded_k);
         nvcuda::wmma::load_matrix_sync(b_frag, &shared_B[0][0], padded_n);
         
-        // 最初のステップでのロード時間測定終了（付加情報）
+        // 共有メモリからフラグメントへのロード時間測定終了
         if (is_measuring_thread && i == 0) {
-            timing_info->single_load_end = clock64();
+            timing_info->shared_to_frag_end = clock64();
         }
         
-        // 最初のステップでの計算時間測定開始（付加情報）
+        // 計算時間測定開始
         if (is_measuring_thread && i == 0) {
-            timing_info->single_step_compute_start = clock64();
+            timing_info->compute_start = clock64();
         }
         
         // 行列乗算を実行（TensorCore命令を使用）
         nvcuda::wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
         
-        // 最初のステップでの計算時間測定終了（付加情報）
+        // 計算時間測定終了
         if (is_measuring_thread && i == 0) {
-            timing_info->single_step_compute_end = clock64();
+            timing_info->compute_end = clock64();
+        }
+        
+        // 同期2時間測定開始
+        if (is_measuring_thread && i == 0) {
+            timing_info->sync2_start = clock64();
         }
         
         // 同期 - 次のタイルをロードする前にすべての計算が完了するまで待機
         __syncthreads();
+        
+        // 同期2時間測定終了
+        if (is_measuring_thread && i == 0) {
+            timing_info->sync2_end = clock64();
+        }
     }
     
-    // 総計算時間測定終了（ストアは含めない）
-    if (is_measuring_thread) {
-        timing_info->total_compute_end = clock64();
-    }
-    
-    // 単一タイルのストア時間測定開始（付加情報）
+    // 結果の書き戻し時間測定開始
     if (is_measuring_thread) {
         timing_info->store_start = clock64();
     }
@@ -360,7 +353,7 @@ __global__ void tensor_core_shared_memory_kernel(half *A, half *B, float *C,
     // 結果をグローバルメモリに書き戻す
     nvcuda::wmma::store_matrix_sync(C + (row_start * n + col_start), c_frag, n, nvcuda::wmma::mem_row_major);
     
-    // 単一タイルのストア時間測定終了（付加情報）
+    // 結果の書き戻し時間測定終了
     if (is_measuring_thread) {
         timing_info->store_end = clock64();
     }
@@ -382,32 +375,32 @@ __global__ void cuda_core_kernel(half *A, half *B, float *C,
     bool is_measuring_thread = (threadIdx.x == 0 && threadIdx.y == 0 && 
                                blockIdx.x == 0 && blockIdx.y == 0);
     
-    // 総計算時間測定開始
-    if (is_measuring_thread) {
-        timing_info->total_compute_start = clock64();
-    }
+    // // データロード時間測定開始
+    // if (is_measuring_thread) {
+    //     timing_info->global_to_frag_start = clock64();
+    // }
     
     // 行列乗算の計算
     float sum = 0.0f;
     
-    // 最初のステップでの計算時間測定開始（付加情報）
+    // // データロード時間測定終了
+    // if (is_measuring_thread) {
+    //     timing_info->global_to_frag_end = clock64();
+    // }
+    
+    // 計算時間測定開始
     if (is_measuring_thread) {
-        timing_info->single_step_compute_start = clock64();
+        timing_info->compute_start = clock64();
     }
     
     // 内積計算
     for (int i = 0; i < k; i++) {
         sum += __half2float(A[row * k + i]) * __half2float(B[i * n + col]);
-        
-        // 最初のステップでの計算時間測定終了（付加情報）
-        if (is_measuring_thread && i == 0) {
-            timing_info->single_step_compute_end = clock64();
-        }
     }
     
-    // 総計算時間測定終了
+    // 計算時間測定終了
     if (is_measuring_thread) {
-        timing_info->total_compute_end = clock64();
+        timing_info->compute_end = clock64();
     }
     
     // 結果の書き戻し時間測定開始
@@ -448,16 +441,11 @@ __global__ void cuda_core_shared_kernel(half *A, half *B, float *C,
     
     float sum = 0.0f;
     
-    // 総計算時間測定開始（全処理、ストアは含めない）
-    if (is_measuring_thread) {
-        timing_info->total_compute_start = clock64();
-    }
-    
     // K次元をタイルに分割して処理
     for (int tile = 0; tile < (k + TILE_SIZE - 1) / TILE_SIZE; tile++) {
-        // 最初のタイルでのロード時間測定開始（付加情報）
+        // グローバルメモリから共有メモリへのロード時間測定開始
         if (is_measuring_thread && tile == 0) {
-            timing_info->single_load_start = clock64();
+            timing_info->global_to_shared_start = clock64();
         }
         
         // 共有メモリにデータをロード
@@ -480,17 +468,27 @@ __global__ void cuda_core_shared_kernel(half *A, half *B, float *C,
             shared_B[ty][tx] = __float2half(0.0f);
         }
         
+        // グローバルメモリから共有メモリへのロード時間測定終了
+        if (is_measuring_thread && tile == 0) {
+            timing_info->global_to_shared_end = clock64();
+        }
+        
+        // 同期1時間測定開始
+        if (is_measuring_thread && tile == 0) {
+            timing_info->sync1_start = clock64();
+        }
+        
         // 同期
         __syncthreads();
         
-        // 最初のタイルでのロード時間測定終了（付加情報）
+        // 同期1時間測定終了
         if (is_measuring_thread && tile == 0) {
-            timing_info->single_load_end = clock64();
+            timing_info->sync1_end = clock64();
         }
         
-        // 最初のタイルでの計算時間測定開始（付加情報）
+        // 計算時間測定開始
         if (is_measuring_thread && tile == 0) {
-            timing_info->single_step_compute_start = clock64();
+            timing_info->compute_start = clock64();
         }
         
         // タイル内の計算
@@ -498,21 +496,26 @@ __global__ void cuda_core_shared_kernel(half *A, half *B, float *C,
             sum += __half2float(shared_A[ty][i]) * __half2float(shared_B[i][tx]);
         }
         
-        // 最初のタイルでの計算時間測定終了（付加情報）
+        // 計算時間測定終了
         if (is_measuring_thread && tile == 0) {
-            timing_info->single_step_compute_end = clock64();
+            timing_info->compute_end = clock64();
+        }
+        
+        // 同期2時間測定開始
+        if (is_measuring_thread && tile == 0) {
+            timing_info->sync2_start = clock64();
         }
         
         // 同期（次のタイルの処理前）
         __syncthreads();
+        
+        // 同期2時間測定終了
+        if (is_measuring_thread && tile == 0) {
+            timing_info->sync2_end = clock64();
+        }
     }
     
-    // 総計算時間測定終了（ストアは含めない）
-    if (is_measuring_thread) {
-        timing_info->total_compute_end = clock64();
-    }
-    
-    // 単一要素のストア時間測定開始（付加情報）
+    // 結果の書き戻し時間測定開始
     if (is_measuring_thread) {
         timing_info->store_start = clock64();
     }
@@ -522,7 +525,7 @@ __global__ void cuda_core_shared_kernel(half *A, half *B, float *C,
         C[row * n + col] = sum;
     }
     
-    // 単一要素のストア時間測定終了（付加情報）
+    // 結果の書き戻し時間測定終了
     if (is_measuring_thread) {
         timing_info->store_end = clock64();
     }
@@ -620,16 +623,12 @@ TimingInfo profile_tensor_core_global(half *h_A, half *h_B, float *h_C) {
         (float)(h_timing.fragment_declare_end - h_timing.fragment_declare_start) / clock_rate * 1000.0f;
     timing.fragment_init_time = 
         (float)(h_timing.fragment_init_end - h_timing.fragment_init_start) / clock_rate * 1000.0f;
+    timing.global_to_frag_time = 
+        (float)(h_timing.global_to_frag_end - h_timing.global_to_frag_start) / clock_rate * 1000.0f;
     timing.compute_time = 
-        (float)(h_timing.total_compute_end - h_timing.total_compute_start) / clock_rate * 1000.0f;
+        (float)(h_timing.compute_end - h_timing.compute_start) / clock_rate * 1000.0f;
     timing.store_time = 
         (float)(h_timing.store_end - h_timing.store_start) / clock_rate * 1000.0f;
-    
-    // 付加情報
-    timing.single_step_compute_time = 
-        (float)(h_timing.single_step_compute_end - h_timing.single_step_compute_start) / clock_rate * 1000.0f;
-    timing.single_load_time = 
-        (float)(h_timing.single_load_end - h_timing.single_load_start) / clock_rate * 1000.0f;
     
     // リソース解放
     CUDA_CHECK(cudaFree(d_A));
@@ -651,10 +650,9 @@ TimingInfo profile_tensor_core_global(half *h_A, half *h_B, float *h_C) {
     timing.copy_in_time /= 1000.0f;
     timing.kernel_time /= 1000.0f;
     timing.copy_out_time /= 1000.0f;
+    timing.global_to_frag_time /= 1000.0f;
     timing.compute_time /= 1000.0f;
     timing.store_time /= 1000.0f;
-    timing.single_step_compute_time /= 1000.0f;
-    timing.single_load_time /= 1000.0f;
     
     return timing;
 }
@@ -751,16 +749,17 @@ TimingInfo profile_tensor_core_shared(half *h_A, half *h_B, float *h_C) {
         (float)(h_timing.fragment_declare_end - h_timing.fragment_declare_start) / clock_rate * 1000.0f;
     timing.fragment_init_time = 
         (float)(h_timing.fragment_init_end - h_timing.fragment_init_start) / clock_rate * 1000.0f;
+    timing.global_to_shared_time = 
+        (float)(h_timing.global_to_shared_end - h_timing.global_to_shared_start) / clock_rate * 1000.0f;
+    timing.shared_to_frag_time = 
+        (float)(h_timing.shared_to_frag_end - h_timing.shared_to_frag_start) / clock_rate * 1000.0f;
     timing.compute_time = 
-        (float)(h_timing.total_compute_end - h_timing.total_compute_start) / clock_rate * 1000.0f;
-    
-    // 付加情報（単一タイルのストア時間）
+        (float)(h_timing.compute_end - h_timing.compute_start) / clock_rate * 1000.0f;
     timing.store_time = 
         (float)(h_timing.store_end - h_timing.store_start) / clock_rate * 1000.0f;
-    timing.single_step_compute_time = 
-        (float)(h_timing.single_step_compute_end - h_timing.single_step_compute_start) / clock_rate * 1000.0f;
-    timing.single_load_time = 
-        (float)(h_timing.single_load_end - h_timing.single_load_start) / clock_rate * 1000.0f;
+    timing.sync_overhead = 
+        (float)((h_timing.sync1_end - h_timing.sync1_start) + 
+                (h_timing.sync2_end - h_timing.sync2_start)) / clock_rate * 1000.0f;
     
     // リソース解放
     CUDA_CHECK(cudaFree(d_A));
@@ -776,16 +775,17 @@ TimingInfo profile_tensor_core_shared(half *h_A, half *h_B, float *h_C) {
     CUDA_CHECK(cudaEventDestroy(stop_kernel));
     CUDA_CHECK(cudaEventDestroy(start_copy_out));
     CUDA_CHECK(cudaEventDestroy(stop_copy_out));
-
+    
     // ミリ秒から秒に変換
     timing.total_time /= 1000.0f;
     timing.copy_in_time /= 1000.0f;
     timing.kernel_time /= 1000.0f;
     timing.copy_out_time /= 1000.0f;
+    timing.global_to_shared_time /= 1000.0f;
+    timing.shared_to_frag_time /= 1000.0f;
     timing.compute_time /= 1000.0f;
     timing.store_time /= 1000.0f;
-    timing.single_step_compute_time /= 1000.0f;
-    timing.single_load_time /= 1000.0f;
+    timing.sync_overhead /= 1000.0f;
     
     return timing;
 }
@@ -878,19 +878,16 @@ TimingInfo profile_cuda_core_global(half *h_A, half *h_B, float *h_C) {
     float clock_rate = prop.clockRate * 1000.0f;
     
     // clock64()の時間をミリ秒に変換
+    timing.global_to_frag_time = 
+        (float)(h_timing.global_to_frag_end - h_timing.global_to_frag_start) / clock_rate * 1000.0f;
     timing.compute_time = 
-        (float)(h_timing.total_compute_end - h_timing.total_compute_start) / clock_rate * 1000.0f;
+        (float)(h_timing.compute_end - h_timing.compute_start) / clock_rate * 1000.0f;
     timing.store_time = 
         (float)(h_timing.store_end - h_timing.store_start) / clock_rate * 1000.0f;
-    
-    // 付加情報
-    timing.single_step_compute_time = 
-        (float)(h_timing.single_step_compute_end - h_timing.single_step_compute_start) / clock_rate * 1000.0f;
     
     // フラグメント関連の時間は0に設定（CUDA Coreでは使用しない）
     timing.fragment_declare_time = 0.0f;
     timing.fragment_init_time = 0.0f;
-    timing.single_load_time = 0.0f;
     
     // リソース解放
     CUDA_CHECK(cudaFree(d_A));
@@ -912,9 +909,9 @@ TimingInfo profile_cuda_core_global(half *h_A, half *h_B, float *h_C) {
     timing.copy_in_time /= 1000.0f;
     timing.kernel_time /= 1000.0f;
     timing.copy_out_time /= 1000.0f;
+    timing.global_to_frag_time /= 1000.0f;
     timing.compute_time /= 1000.0f;
     timing.store_time /= 1000.0f;
-    timing.single_step_compute_time /= 1000.0f;
     
     return timing;
 }
@@ -1001,23 +998,27 @@ TimingInfo profile_cuda_core_shared(half *h_A, half *h_B, float *h_C) {
     CUDA_CHECK(cudaEventElapsedTime(&timing.kernel_time, start_kernel, stop_kernel));
     CUDA_CHECK(cudaEventElapsedTime(&timing.copy_out_time, start_copy_out, stop_copy_out));
     
-    // GPUのクロックレートを取得（近似値としてプロパティから取得）
+    // GPUのクロックレートを取得
     cudaDeviceProp prop;
     CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
-    float clock_rate = prop.clockRate * 1000.0f; // Hz単位
-    
+    float clock_rate = prop.clockRate * 1000.0f;
+
     // clock64()の時間をミリ秒に変換
     timing.global_to_shared_time = 
         (float)(h_timing.global_to_shared_end - h_timing.global_to_shared_start) / clock_rate * 1000.0f;
     timing.shared_to_frag_time = 
         (float)(h_timing.shared_to_frag_end - h_timing.shared_to_frag_start) / clock_rate * 1000.0f;
     timing.compute_time = 
-        (float)(h_timing.total_compute_end - h_timing.total_compute_start) / clock_rate * 1000.0f;
+        (float)(h_timing.compute_end - h_timing.compute_start) / clock_rate * 1000.0f;
     timing.store_time = 
         (float)(h_timing.store_end - h_timing.store_start) / clock_rate * 1000.0f;
     timing.sync_overhead = 
         (float)((h_timing.sync1_end - h_timing.sync1_start) + 
                 (h_timing.sync2_end - h_timing.sync2_start)) / clock_rate * 1000.0f;
+    
+    // フラグメント関連の時間は0に設定（CUDA Coreでは使用しない）
+    timing.fragment_declare_time = 0.0f;
+    timing.fragment_init_time = 0.0f;
     
     // リソース解放
     CUDA_CHECK(cudaFree(d_A));
@@ -1040,7 +1041,6 @@ TimingInfo profile_cuda_core_shared(half *h_A, half *h_B, float *h_C) {
     timing.kernel_time /= 1000.0f;
     timing.copy_out_time /= 1000.0f;
     timing.global_to_shared_time /= 1000.0f;
-    timing.shared_to_frag_time /= 1000.0f;
     timing.compute_time /= 1000.0f;
     timing.store_time /= 1000.0f;
     timing.sync_overhead /= 1000.0f;
@@ -1068,45 +1068,61 @@ double cpu_matmul(half *A, half *B, float *C) {
 }
 
 // タイムラインデータ出力関数を修正
-void output_timeline_data(const TimingInfo& global_timing, const TimingInfo& shared_timing, 
-                         const TimingInfo& cuda_global_timing, const TimingInfo& cuda_shared_timing) {
+void output_timeline_data(const TimingInfo& global_timing, const TimingInfo& shared_timing, const TimingInfo& cuda_global_timing,
+                                  const TimingInfo& cuda_shared_timing) {
     std::cout << "\n=== TIMELINE_DATA_START ===\n";
     
-    // Tensor Core (Global Memory)版のタイムライン
+    // グローバルメモリ版のタイムライン
     float global_start = 0.0f;
     float global_declare_end = global_start + global_timing.fragment_declare_time * 1000;
     float global_init_end = global_declare_end + global_timing.fragment_init_time * 1000;
-    float global_compute_end = global_init_end + global_timing.compute_time * 1000;
+    float global_global_to_frag_end = global_init_end + global_timing.global_to_frag_time * 1000;
+    float global_compute_end = global_global_to_frag_end + global_timing.compute_time * 1000;
     float global_store_end = global_compute_end + global_timing.store_time * 1000;
     
-    std::cout << "PHASE,TensorCore_Global,Fragment_Declare," << global_start << "," << global_declare_end << "\n";
-    std::cout << "PHASE,TensorCore_Global,Fragment_Init," << global_declare_end << "," << global_init_end << "\n";
-    std::cout << "PHASE,TensorCore_Global,Compute," << global_init_end << "," << global_compute_end << "\n";
-    std::cout << "PHASE,TensorCore_Global,Store," << global_compute_end << "," << global_store_end << "\n";
+    std::cout << "PHASE,Global,Fragment_Declare," << global_start << "," << global_declare_end << "\n";
+    std::cout << "PHASE,Global,Fragment_Init," << global_declare_end << "," << global_init_end << "\n";
+    std::cout << "PHASE,Global,Global_to_Frag," << global_init_end << "," << global_global_to_frag_end << "\n";
+    std::cout << "PHASE,Global,Compute," << global_global_to_frag_end << "," << global_compute_end << "\n";
+    std::cout << "PHASE,Global,Store," << global_compute_end << "," << global_store_end << "\n";
     
-    // Tensor Core (Shared Memory)版のタイムライン
+    // 共有メモリ版のタイムライン
     float shared_start = 0.0f;
     float shared_declare_end = shared_start + shared_timing.fragment_declare_time * 1000;
     float shared_init_end = shared_declare_end + shared_timing.fragment_init_time * 1000;
-    float shared_compute_end = shared_init_end + shared_timing.compute_time * 1000;
+    float shared_global_to_shared_end = shared_init_end + shared_timing.global_to_shared_time * 1000;
+    float shared_shared_to_frag_end = shared_global_to_shared_end + shared_timing.shared_to_frag_time * 1000;
+    float shared_compute_end = shared_shared_to_frag_end + shared_timing.compute_time * 1000;
+    float shared_store_end = shared_compute_end + shared_timing.store_time * 1000;
     
-    std::cout << "PHASE,TensorCore_Shared,Fragment_Declare," << shared_start << "," << shared_declare_end << "\n";
-    std::cout << "PHASE,TensorCore_Shared,Fragment_Init," << shared_declare_end << "," << shared_init_end << "\n";
-    std::cout << "PHASE,TensorCore_Shared,Compute," << shared_init_end << "," << shared_compute_end << "\n";
-    
+    std::cout << "PHASE,Shared,Fragment_Declare," << shared_start << "," << shared_declare_end << "\n";
+    std::cout << "PHASE,Shared,Fragment_Init," << shared_declare_end << "," << shared_init_end << "\n";
+    std::cout << "PHASE,Shared,Global_to_Shared," << shared_init_end << "," << shared_global_to_shared_end << "\n";
+    std::cout << "PHASE,Shared,Shared_to_Frag," << shared_global_to_shared_end << "," << shared_shared_to_frag_end << "\n";
+    std::cout << "PHASE,Shared,Compute," << shared_shared_to_frag_end << "," << shared_compute_end << "\n";
+    std::cout << "PHASE,Shared,Store," << shared_compute_end << "," << shared_store_end << "\n";
+
     // CUDA Core (Global Memory)版のタイムライン
     float cuda_global_start = 0.0f;
+    // float cuda_global_load_end = cuda_global_start + cuda_global_timing.global_to_frag_time * 1000;
     float cuda_global_compute_end = cuda_global_start + cuda_global_timing.compute_time * 1000;
     float cuda_global_store_end = cuda_global_compute_end + cuda_global_timing.store_time * 1000;
     
+    // std::cout << "PHASE,CudaCore_Global,Global_Load," << cuda_global_start << "," << cuda_global_load_end << "\n";
     std::cout << "PHASE,CudaCore_Global,Compute," << cuda_global_start << "," << cuda_global_compute_end << "\n";
     std::cout << "PHASE,CudaCore_Global,Store," << cuda_global_compute_end << "," << cuda_global_store_end << "\n";
     
     // CUDA Core (Shared Memory)版のタイムライン
     float cuda_shared_start = 0.0f;
-    float cuda_shared_compute_end = cuda_shared_start + cuda_shared_timing.compute_time * 1000;
+    float cuda_shared_load_end = cuda_shared_start + cuda_shared_timing.global_to_shared_time * 1000;
+    // float cuda_shared_read_end = cuda_shared_load_end + cuda_shared_timing.shared_to_frag_time * 1000;
+    float cuda_shared_compute_end = cuda_shared_load_end + cuda_shared_timing.compute_time * 1000;
+    float cuda_shared_store_end = cuda_shared_compute_end + cuda_shared_timing.store_time * 1000;
     
-    std::cout << "PHASE,CudaCore_Shared,Compute," << cuda_shared_start << "," << cuda_shared_compute_end << "\n";
+    std::cout << "PHASE,CudaCore_Shared,Global_to_Shared," << cuda_shared_start << "," << cuda_shared_load_end << "\n";
+    // std::cout << "PHASE,CudaCore_Shared,Shared_Read," << cuda_shared_load_end << "," << cuda_shared_read_end << "\n";
+    std::cout << "PHASE,CudaCore_Shared,Compute," << cuda_shared_load_end << "," << cuda_shared_compute_end << "\n";
+    std::cout << "PHASE,CudaCore_Shared,Store," << cuda_shared_compute_end << "," << cuda_shared_store_end << "\n";
     
     std::cout << "=== TIMELINE_DATA_END ===\n";
 }
@@ -1146,9 +1162,9 @@ int main() {
     float *C_cuda_shared = (float*)malloc(M * N * sizeof(float));
     float *C_ref = (float*)malloc(M * N * sizeof(float));
     
-    // 行列の初期化（全ての結果行列を初期化）
+    // 行列の初期化
     printf("Initializing matrices...\n");
-    init_matrices(A, B, C_tc, C_tc_shared, C_cuda_global, C_cuda_shared, C_ref);
+    init_matrices(A, B, C_ref);
     
     // CPU上での計算（リファレンス）
     printf("Computing reference solution on CPU...\n");
@@ -1178,11 +1194,10 @@ int main() {
         global_timing.kernel_time += timing_global.kernel_time;
         global_timing.fragment_declare_time += timing_global.fragment_declare_time;
         global_timing.fragment_init_time += timing_global.fragment_init_time;
+        global_timing.global_to_frag_time += timing_global.global_to_frag_time;
         global_timing.compute_time += timing_global.compute_time;
         global_timing.store_time += timing_global.store_time;
         global_timing.copy_out_time += timing_global.copy_out_time;
-        global_timing.single_step_compute_time += timing_global.single_step_compute_time;
-        global_timing.single_load_time += timing_global.single_load_time;
         
         sleep(1);
         
@@ -1193,11 +1208,12 @@ int main() {
         shared_timing.kernel_time += timing_shared.kernel_time;
         shared_timing.fragment_declare_time += timing_shared.fragment_declare_time;
         shared_timing.fragment_init_time += timing_shared.fragment_init_time;
+        shared_timing.global_to_shared_time += timing_shared.global_to_shared_time;
+        shared_timing.shared_to_frag_time += timing_shared.shared_to_frag_time;
         shared_timing.compute_time += timing_shared.compute_time;
         shared_timing.store_time += timing_shared.store_time;
         shared_timing.copy_out_time += timing_shared.copy_out_time;
-        shared_timing.single_step_compute_time += timing_shared.single_step_compute_time;
-        shared_timing.single_load_time += timing_shared.single_load_time;
+        shared_timing.sync_overhead += timing_shared.sync_overhead;
         
         sleep(1);
 
@@ -1206,10 +1222,10 @@ int main() {
         cuda_global_timing.total_time += timing_cuda_global.total_time;
         cuda_global_timing.copy_in_time += timing_cuda_global.copy_in_time;
         cuda_global_timing.kernel_time += timing_cuda_global.kernel_time;
+        cuda_global_timing.global_to_frag_time += timing_cuda_global.global_to_frag_time;
         cuda_global_timing.compute_time += timing_cuda_global.compute_time;
         cuda_global_timing.store_time += timing_cuda_global.store_time;
         cuda_global_timing.copy_out_time += timing_cuda_global.copy_out_time;
-        cuda_global_timing.single_step_compute_time += timing_cuda_global.single_step_compute_time;
         
         sleep(1);
         
@@ -1218,54 +1234,54 @@ int main() {
         cuda_shared_timing.total_time += timing_cuda_shared.total_time;
         cuda_shared_timing.copy_in_time += timing_cuda_shared.copy_in_time;
         cuda_shared_timing.kernel_time += timing_cuda_shared.kernel_time;
+        cuda_shared_timing.global_to_shared_time += timing_cuda_shared.global_to_shared_time;
+        cuda_shared_timing.shared_to_frag_time += timing_cuda_shared.shared_to_frag_time;
         cuda_shared_timing.compute_time += timing_cuda_shared.compute_time;
         cuda_shared_timing.store_time += timing_cuda_shared.store_time;
         cuda_shared_timing.copy_out_time += timing_cuda_shared.copy_out_time;
-        cuda_shared_timing.single_step_compute_time += timing_cuda_shared.single_step_compute_time;
-        cuda_shared_timing.single_load_time += timing_cuda_shared.single_load_time;
-        
-        sleep(1);
+        cuda_shared_timing.sync_overhead += timing_cuda_shared.sync_overhead;
     }
     
-    // 平均計算に付加情報を追加
+    // 平均計算
     global_timing.total_time /= NUM_RUNS;
     global_timing.copy_in_time /= NUM_RUNS;
     global_timing.kernel_time /= NUM_RUNS;
     global_timing.fragment_declare_time /= NUM_RUNS;
     global_timing.fragment_init_time /= NUM_RUNS;
+    global_timing.global_to_frag_time /= NUM_RUNS;
     global_timing.compute_time /= NUM_RUNS;
     global_timing.store_time /= NUM_RUNS;
     global_timing.copy_out_time /= NUM_RUNS;
-    global_timing.single_step_compute_time /= NUM_RUNS;
-    global_timing.single_load_time /= NUM_RUNS;
     
     shared_timing.total_time /= NUM_RUNS;
     shared_timing.copy_in_time /= NUM_RUNS;
     shared_timing.kernel_time /= NUM_RUNS;
     shared_timing.fragment_declare_time /= NUM_RUNS;
     shared_timing.fragment_init_time /= NUM_RUNS;
+    shared_timing.global_to_shared_time /= NUM_RUNS;
+    shared_timing.shared_to_frag_time /= NUM_RUNS;
     shared_timing.compute_time /= NUM_RUNS;
     shared_timing.store_time /= NUM_RUNS;
     shared_timing.copy_out_time /= NUM_RUNS;
-    shared_timing.single_step_compute_time /= NUM_RUNS;
-    shared_timing.single_load_time /= NUM_RUNS;
+    shared_timing.sync_overhead /= NUM_RUNS;
 
     cuda_global_timing.total_time /= NUM_RUNS;
     cuda_global_timing.copy_in_time /= NUM_RUNS;
     cuda_global_timing.kernel_time /= NUM_RUNS;
+    cuda_global_timing.global_to_frag_time /= NUM_RUNS;
     cuda_global_timing.compute_time /= NUM_RUNS;
     cuda_global_timing.store_time /= NUM_RUNS;
     cuda_global_timing.copy_out_time /= NUM_RUNS;
-    cuda_global_timing.single_step_compute_time /= NUM_RUNS;
     
     cuda_shared_timing.total_time /= NUM_RUNS;
     cuda_shared_timing.copy_in_time /= NUM_RUNS;
     cuda_shared_timing.kernel_time /= NUM_RUNS;
+    cuda_shared_timing.global_to_shared_time /= NUM_RUNS;
+    cuda_shared_timing.shared_to_frag_time /= NUM_RUNS;
     cuda_shared_timing.compute_time /= NUM_RUNS;
     cuda_shared_timing.store_time /= NUM_RUNS;
     cuda_shared_timing.copy_out_time /= NUM_RUNS;
-    cuda_shared_timing.single_step_compute_time /= NUM_RUNS;
-    cuda_shared_timing.single_load_time /= NUM_RUNS;
+    cuda_shared_timing.sync_overhead /= NUM_RUNS;
     
     // 結果の検証
     printf("Validating results...\n");
@@ -1274,8 +1290,8 @@ int main() {
     bool cuda_global_passed = validate_results(C_cuda_global, C_ref);
     bool cuda_shared_passed = validate_results(C_cuda_shared, C_ref);
     
-    // 結果表示部分を修正
-    printf("\n===== Detailed Performance Results =====\n");
+    // 結果表示
+    printf("\n===== Detailed Performance Results (clock64()を使用) =====\n");
     printf("Matrix Size: %d x %d x %d\n", M, N, K);
     printf("CPU Time: %.6f seconds\n\n", cpu_time);
     
@@ -1287,13 +1303,11 @@ int main() {
            (global_timing.kernel_time / global_timing.total_time) * 100);
     printf("    Fragment Declare: %.9f seconds\n", global_timing.fragment_declare_time);
     printf("    Fragment Init:    %.9f seconds\n", global_timing.fragment_init_time);
+    printf("    Global->Frag:     %.9f seconds\n", global_timing.global_to_frag_time);
     printf("    Compute:          %.9f seconds\n", global_timing.compute_time);
     printf("    Store:            %.9f seconds\n", global_timing.store_time);
     printf("  Copy D->H:     %.6f seconds (%.1f%%)\n", global_timing.copy_out_time, 
            (global_timing.copy_out_time / global_timing.total_time) * 100);
-    printf("  Additional Info:\n");
-    printf("    Single Step Compute: %.9f seconds\n", global_timing.single_step_compute_time);
-    printf("    Single Load:         %.9f seconds\n", global_timing.single_load_time);
     
     printf("\n--- Tensor Core (Shared Memory) %s ---\n", tc_shared_passed ? "(PASSED)" : "(FAILED)");
     printf("Total Time: %.6f seconds\n", shared_timing.total_time);
@@ -1301,28 +1315,27 @@ int main() {
            (shared_timing.copy_in_time / shared_timing.total_time) * 100);
     printf("  Kernel Total:  %.6f seconds (%.1f%%)\n", shared_timing.kernel_time, 
            (shared_timing.kernel_time / shared_timing.total_time) * 100);
-    printf("    Fragment Declare: %.9f seconds\n", shared_timing.fragment_declare_time);
-    printf("    Fragment Init:    %.9f seconds\n", shared_timing.fragment_init_time);
-    printf("    Compute:          %.9f seconds\n", shared_timing.compute_time);
-    printf("    Store:            %.9f seconds\n", shared_timing.store_time);
+    printf("    Fragment Declare:  %.9f seconds\n", shared_timing.fragment_declare_time);
+    printf("    Fragment Init:     %.9f seconds\n", shared_timing.fragment_init_time);
+    printf("    Global->Shared:    %.9f seconds\n", shared_timing.global_to_shared_time);
+    printf("    Shared->Frag:      %.9f seconds\n", shared_timing.shared_to_frag_time);
+    printf("    Compute:           %.9f seconds\n", shared_timing.compute_time);
+    printf("    Store:             %.9f seconds\n", shared_timing.store_time);
+    printf("    Sync Overhead:     %.9f seconds\n", shared_timing.sync_overhead);
     printf("  Copy D->H:     %.6f seconds (%.1f%%)\n", shared_timing.copy_out_time, 
            (shared_timing.copy_out_time / shared_timing.total_time) * 100);
-    printf("  Additional Info:\n");
-    printf("    Single Step Compute: %.9f seconds\n", shared_timing.single_step_compute_time);
-    printf("    Single Load:         %.9f seconds\n", shared_timing.single_load_time);
-    
+
     printf("\n--- CUDA Core (Global Memory) %s ---\n", cuda_global_passed ? "(PASSED)" : "(FAILED)");
     printf("Total Time: %.6f seconds\n", cuda_global_timing.total_time);
     printf("  Copy H->D:     %.6f seconds (%.1f%%)\n", cuda_global_timing.copy_in_time, 
            (cuda_global_timing.copy_in_time / cuda_global_timing.total_time) * 100);
     printf("  Kernel Total:  %.6f seconds (%.1f%%)\n", cuda_global_timing.kernel_time, 
            (cuda_global_timing.kernel_time / cuda_global_timing.total_time) * 100);
+    printf("    Global Load:      %.9f seconds\n", cuda_global_timing.global_to_frag_time);
     printf("    Compute:          %.9f seconds\n", cuda_global_timing.compute_time);
     printf("    Store:            %.9f seconds\n", cuda_global_timing.store_time);
     printf("  Copy D->H:     %.6f seconds (%.1f%%)\n", cuda_global_timing.copy_out_time, 
            (cuda_global_timing.copy_out_time / cuda_global_timing.total_time) * 100);
-    printf("  Additional Info:\n");
-    printf("    Single Step Compute: %.9f seconds\n", cuda_global_timing.single_step_compute_time);
     
     printf("\n--- CUDA Core (Shared Memory) %s ---\n", cuda_shared_passed ? "(PASSED)" : "(FAILED)");
     printf("Total Time: %.6f seconds\n", cuda_shared_timing.total_time);
@@ -1330,13 +1343,13 @@ int main() {
            (cuda_shared_timing.copy_in_time / cuda_shared_timing.total_time) * 100);
     printf("  Kernel Total:  %.6f seconds (%.1f%%)\n", cuda_shared_timing.kernel_time, 
            (cuda_shared_timing.kernel_time / cuda_shared_timing.total_time) * 100);
+    printf("    Global->Shared:   %.9f seconds\n", cuda_shared_timing.global_to_shared_time);
+    printf("    Shared Read:      %.9f seconds\n", cuda_shared_timing.shared_to_frag_time);
     printf("    Compute:          %.9f seconds\n", cuda_shared_timing.compute_time);
     printf("    Store:            %.9f seconds\n", cuda_shared_timing.store_time);
+    printf("    Sync Overhead:    %.9f seconds\n", cuda_shared_timing.sync_overhead);
     printf("  Copy D->H:     %.6f seconds (%.1f%%)\n", cuda_shared_timing.copy_out_time, 
            (cuda_shared_timing.copy_out_time / cuda_shared_timing.total_time) * 100);
-    printf("  Additional Info:\n");
-    printf("    Single Step Compute: %.9f seconds\n", cuda_shared_timing.single_step_compute_time);
-    printf("    Single Load:         %.9f seconds\n", cuda_shared_timing.single_load_time);
     
     // フェーズごとの比較
     printf("\n===== Phase Comparison (Global vs Shared) =====\n");
