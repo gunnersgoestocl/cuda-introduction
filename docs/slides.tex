@@ -860,31 +860,34 @@ __global__ void transpose_read_coalesced(
 
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\section{Optimize CUDA program}
-%% 目次
-%\begin{frame}{Contents}
-%    \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
-%    \item \textcolor{gray}{What is CUDA?: Introduction}
-%    \item \textcolor{gray}{A CUDA program for beginners}
-%    \item \textcolor{gray}{How CUDA works}
-%    \item Optimize CUDA program
-%    \begin{enumerate}
-%      \item How to measure performance?
-%      \item Choosing a good block size for performance
-%      \item Using shared memory effectively
-%      \item Example: matrix multiplication
-%    \end{enumerate}
-%    \item \textcolor{gray}{Practice Problems}
-%  \end{enumerate}
-%\end{frame}
-%%%%%%%%%
-%\begin{frame}{How to measure performance: }
-%
-%\end{frame}
-%%%%%%
-%\begin{frame}{How to measure performance: }
-%
-%\end{frame}
+\section{Optimize CUDA program}
+% 目次
+\begin{frame}{Contents}
+   \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+   \item \textcolor{gray}{What is CUDA?: Introduction}
+   \item \textcolor{gray}{A CUDA program for beginners}
+   \item \textcolor{gray}{How CUDA works}
+   \item Optimize CUDA program
+   \begin{enumerate}
+     \item How to measure performance?
+     \item Choosing a good block size for performance
+     \item Using shared memory effectively
+     \item Example: matrix multiplication
+   \end{enumerate}
+   \item \textcolor{gray}{Practice Problems}
+ \end{enumerate}
+\end{frame}
+%%%%%%%%
+\begin{frame}{How to measure performance: }
+If you write a CUDA code, don't forget to check the calculation result and the performance improvement!
+\begin{itemize}
+  \item 
+\end{itemize}
+\end{frame}
+%%%%%
+\begin{frame}{How to measure performance: }
+
+\end{frame}
 %%%%%%%%%
 %\begin{frame}{Matmul program (naive implementation)}
 %
@@ -898,8 +901,117 @@ __global__ void transpose_read_coalesced(
 %
 %\end{frame}
 %%%%%%%%
-\begin{frame}{Using Tensor Core}
+\begin{frame}[fragile]{Using Tensor Core}
+\begin{columns}
+\column{0.55\textwidth}
+\begin{itemize}
+  \item \textbf{Tensor Cores} are specialized high-performance compute cores for matrix multiply and accumulate (MMA) math operations $C=A^TB+C$.
+  \begin{itemize}
+    \item \lstinline|A| takes the shape of $(M,K)$, \lstinline|B| $(K,N)$, \lstinline|C| $(M,N)$
+  \end{itemize}
+  \item It is expected that it consists of 16 stages of FMA units with a parallel degree of $16\times16$.
+  \begin{itemize}
+    \item This explains why they support $(M,N,K)=(16,16,16), (32,8,16), (8,32,16)$
+  \end{itemize}
+\end{itemize}
+\column{0.45\textwidth}
+\begin{figure}
+  \includegraphics[scale=0.3]{img/FP16TensorCore.png}
+  \caption{The image of Tensor Core}
+\end{figure}
+\end{columns}
+\end{frame}
+%%%%%%%%
+\begin{frame}[fragile]{Using Tensor Core: Step by Step}
+Four steps are required to use \textbf{Tensor Core} with \lstinline|<mma.h>|
+\begin{columns}
+\column{0.7\textwidth}
+\begin{enumerate}
+  \item reserve RF for containing a section of a matrix distributed across all threads in a warp.
+  \begin{itemize}
+    \item \lstinline|wmma::fragment<Use, M, N, K, Type, Layout_type> fragment_name;|
+    \item \lstinline|Use|: use of the fragment, \lstinline|wmma::matrix_a, wmma::matrix_b, wmma::accumulator|
+    \item \lstinline|M, N, K|: dimension of operation, \lstinline|matrix_a| should be $M\times K$, \lstinline|matrix_b| $K\times N$, \lstinline|accumulator| $M\times N$
+    \item \lstinline|Type| takes one of \lstinline|half|, \lstinline|float|
+    \item \lstinline|Layout|: must be specified for \lstinline|matrix_a|, \lstinline|matrix_b|
+    \begin{itemize}
+      \item if the columns extend in the z direction, use \lstinline|col_major|
+      \item otherwise (i.e., the rows extends in the z direction), use \lstinline|row_major|
+    \end{itemize}
+  \end{itemize}
+\end{enumerate}
+\column{0.35\textwidth}
+\vspace{-2\baselineskip}
+\begin{figure}
+  \includegraphics[scale=0.1]{img/mma_warp.png}
+  \caption{The image of Tensor Core}
+\end{figure}
+\end{columns}
+\end{frame}
+%%%%%%
+\begin{frame}[fragile]{Using Tensor Core: Step by Step}
+\begin{enumerate}\setcounter{enumi}{1}
+  \item fill a matrix fragment (mainly \lstinline|wmma::accumulator|) with a constant value, with \lstinline|wmma::fill_fragment|
+  \item waits until all warp lanes(threads) have arrived at, and then loads the matrix fragment from memory onto RF region that has been secure in the Step1
+  \begin{itemize}
+    \item \lstinline|wmma::load_matrix_sync(fragment_name, mat_ptr, ldm, Layout_type);|
+    \item \lstinline|mat_ptr|: the top address of the matrix (the submatrix of matrix)\footnote{In C/C++, \lstinline|A+offset| is equivalent to \lstinline|A+(offset*sizeof(item))|}
+    \item \lstinline|ldm|: the number of elements you want to load at once (eg. the number of columns if you load a row)
+    \item \lstinline|Layout_type|: the one for \lstinline|matrix_a| and \lstinline|matrix_b| is inferred (you can skip this), but must specify the one for an \lstinline|accumulator| (most of the time, \lstinline|wmma::mem_row_major|)
+  \end{itemize}
+  % \item Waits until all warp lanes have arrived at, then performs the warp-synchronous MMA operation
+  % \begin{itemize}
+  %   \item \lstinline|wmma::mma_sync(d_frag, a_frag, b_frag, c_frag [, satf]);|
+  %   \item \lstinline|d_frag| and \lstinline|c_frag| could be the same, if \lstinline|satf| is \lstinline|true|, saturation to finite value will be applied
+  % \end{itemize}
+  % \item Syncs, then stores the matrix fragment to memory, the arguments are the same with \lstinline|load_matrix_sync|
+\end{enumerate}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Using Tensor Core: Step by Step}
+\begin{enumerate}\setcounter{enumi}{3}
+  % \item fill a matrix fragment (mainly \lstinline|wmma::accumulator|) with a constant value, with \lstinline|wmma::fill_fragment|
+  % \item waits until all warp lanes(threads) have arrived at, and then loads the matrix fragment from memory onto RF region that has been secure in the Step1
+  % \begin{itemize}
+  %   \item \lstinline|wmma::load_matrix_sync(fragment_name, mat_ptr, ldm, Layout_type);|
+  %   \item \lstinline|mat_ptr|: the top address of the matrix (the submatrix of matrix)\footnote{In C/C++, \lstinline|A+offset| is equivalent to \lstinline|A+(offset*sizeof(item))|}
+  %   \item \lstinline|ldm|: the number of elements you want to load at once (eg. the number of columns if you load a row)
+  %   \item \lstinline|Layout_type|: the one for \lstinline|matrix_a| and \lstinline|matrix_b| is inferred (you can skip this), but must specify the one for an \lstinline|accumulator| (most of the time, \lstinline|wmma::mem_row_major|)
+  % \end{itemize}
+  \item Waits until all warp lanes have arrived at, then performs the warp-synchronous MMA operation
+  \begin{itemize}
+    \item \lstinline|wmma::mma_sync(d_frag, a_frag, b_frag, c_frag [, satf]);|
+    \item \lstinline|d_frag| and \lstinline|c_frag| could be the same, if \lstinline|satf| is \lstinline|true|, saturation to finite value will be applied
+  \end{itemize}
+  \item Syncs, then stores the matrix fragment to memory, the arguments are the same with \lstinline|load_matrix_sync|
+\end{enumerate}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Using Tensor Core: Code Template}
+\begin{lstlisting}[language=CUDA, basicstyle=\ttfamily\tiny]
+#include <mma.h>
+using namespace nvcuda;
 
+__global__ void wmma_ker(half *a, half *b, float *c) {
+   // Declare the fragments
+   wmma::fragment<wmma::matrix_a, 16, 16, 16, half, wmma::col_major> a_frag;
+   wmma::fragment<wmma::matrix_b, 16, 16, 16, half, wmma::row_major> b_frag;
+   wmma::fragment<wmma::accumulator, 16, 16, 16, float> c_frag;
+
+   // Initialize the output to zero
+   wmma::fill_fragment(c_frag, 0.0f);
+
+   // Load the inputs
+   wmma::load_matrix_sync(a_frag, a, 16);
+   wmma::load_matrix_sync(b_frag, b, 16);
+
+   // Perform the matrix multiplication
+   wmma::mma_sync(c_frag, a_frag, b_frag, c_frag);
+
+   // Store the output
+   wmma::store_matrix_sync(c, c_frag, 16, wmma::mem_row_major);
+}
+\end{lstlisting}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Practice Problems}
