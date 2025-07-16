@@ -1,0 +1,1008 @@
+
+Fatbin elf code:
+================
+arch = sm_90
+code version = [1,7]
+host = linux
+compile_size = 64bit
+
+Fatbin elf code:
+================
+arch = sm_90
+code version = [1,7]
+host = linux
+compile_size = 64bit
+
+Fatbin ptx code:
+================
+arch = sm_90
+code version = [8,5]
+host = linux
+compile_size = 64bit
+compressed
+ptxasOptions = 
+
+//
+//
+//
+//
+//
+//
+
+.version 8.5
+.target sm_90
+.address_size 64
+
+//
+//
+//
+//
+//
+
+.visible .entry _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo(
+.param .u64 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0,
+.param .u64 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1,
+.param .u64 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2,
+.param .u32 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3,
+.param .u32 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4,
+.param .u32 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5,
+.param .u64 _Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6
+)
+{
+.reg .pred %p<14>;
+.reg .f32 %f<65>;
+.reg .b32 %r<39>;
+.reg .b64 %rd<27>;
+
+
+ld.param.u64 %rd4, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0];
+ld.param.u64 %rd5, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1];
+ld.param.u64 %rd6, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2];
+ld.param.u32 %r29, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3];
+ld.param.u32 %r27, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4];
+ld.param.u32 %r28, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5];
+ld.param.u64 %rd7, [_Z32tensor_core_global_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6];
+mov.u32 %r1, %ctaid.y;
+shl.b32 %r2, %r1, 4;
+mov.u32 %r3, %ctaid.x;
+shl.b32 %r4, %r3, 4;
+setp.ge.s32 %p1, %r2, %r29;
+setp.ge.s32 %p2, %r4, %r27;
+or.pred %p3, %p1, %p2;
+@%p3 bra $L__BB0_16;
+
+mov.u32 %r30, %tid.x;
+or.b32 %r31, %r30, %r3;
+or.b32 %r5, %r31, %r1;
+setp.ne.s32 %p4, %r5, 0;
+cvta.to.global.u64 %rd1, %rd7;
+@%p4 bra $L__BB0_3;
+
+//
+mov.u64 %rd8, %clock64;
+//
+st.global.u64 [%rd1+144], %rd8;
+//
+mov.u64 %rd9, %clock64;
+//
+st.global.u64 [%rd1], %rd9;
+//
+mov.u64 %rd10, %clock64;
+//
+st.global.u64 [%rd1+8], %rd10;
+//
+mov.u64 %rd11, %clock64;
+//
+st.global.u64 [%rd1+16], %rd11;
+//
+mov.u64 %rd12, %clock64;
+//
+st.global.u64 [%rd1+24], %rd12;
+
+$L__BB0_3:
+setp.lt.s32 %p5, %r28, 16;
+mov.f32 %f57, 0f00000000;
+mov.f32 %f58, %f57;
+mov.f32 %f59, %f57;
+mov.f32 %f60, %f57;
+mov.f32 %f61, %f57;
+mov.f32 %f62, %f57;
+mov.f32 %f63, %f57;
+mov.f32 %f64, %f57;
+@%p5 bra $L__BB0_12;
+
+mul.lo.s32 %r6, %r2, %r28;
+cvta.to.global.u64 %rd2, %rd4;
+cvta.to.global.u64 %rd3, %rd5;
+mov.u32 %r38, 0;
+mov.u32 %r37, 16;
+mov.f32 %f57, 0f00000000;
+
+$L__BB0_5:
+mov.u32 %r7, %r37;
+or.b32 %r9, %r38, %r5;
+setp.ne.s32 %p6, %r9, 0;
+@%p6 bra $L__BB0_7;
+
+//
+mov.u64 %rd13, %clock64;
+//
+st.global.u64 [%rd1+64], %rd13;
+
+$L__BB0_7:
+add.s32 %r34, %r38, %r6;
+mul.wide.s32 %rd14, %r34, 2;
+add.s64 %rd15, %rd2, %rd14;
+wmma.load.a.sync.aligned.row.m16n16k16.global.f16 {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, [%rd15], %r28;
+mad.lo.s32 %r35, %r38, %r27, %r4;
+mul.wide.s32 %rd16, %r35, 2;
+add.s64 %rd17, %rd3, %rd16;
+wmma.load.b.sync.aligned.col.m16n16k16.global.f16 {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, [%rd17], %r27;
+@%p6 bra $L__BB0_9;
+
+//
+mov.u64 %rd18, %clock64;
+//
+st.global.u64 [%rd1+72], %rd18;
+//
+mov.u64 %rd19, %clock64;
+//
+st.global.u64 [%rd1+96], %rd19;
+
+$L__BB0_9:
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+@%p6 bra $L__BB0_11;
+
+//
+mov.u64 %rd20, %clock64;
+//
+st.global.u64 [%rd1+104], %rd20;
+
+$L__BB0_11:
+setp.lt.s32 %p9, %r7, %r28;
+add.s32 %r37, %r7, 16;
+setp.le.s32 %p10, %r37, %r28;
+and.pred %p11, %p9, %p10;
+mov.u32 %r38, %r7;
+@%p11 bra $L__BB0_5;
+
+$L__BB0_12:
+@%p4 bra $L__BB0_14;
+
+//
+mov.u64 %rd21, %clock64;
+//
+st.global.u64 [%rd1+112], %rd21;
+
+$L__BB0_14:
+mad.lo.s32 %r36, %r2, %r27, %r4;
+cvta.to.global.u64 %rd22, %rd6;
+mul.wide.s32 %rd23, %r36, 4;
+add.s64 %rd24, %rd22, %rd23;
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd24], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r27;
+@%p4 bra $L__BB0_16;
+
+//
+mov.u64 %rd25, %clock64;
+//
+st.global.u64 [%rd1+120], %rd25;
+//
+mov.u64 %rd26, %clock64;
+//
+st.global.u64 [%rd1+152], %rd26;
+
+$L__BB0_16:
+ret;
+
+}
+//
+.visible .entry _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo(
+.param .u64 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0,
+.param .u64 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1,
+.param .u64 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2,
+.param .u32 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3,
+.param .u32 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4,
+.param .u32 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5,
+.param .u64 _Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6
+)
+{
+.reg .pred %p<25>;
+.reg .b16 %rs<3>;
+.reg .f32 %f<65>;
+.reg .b32 %r<74>;
+.reg .b64 %rd<33>;
+//
+.shared .align 2 .b8 _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_A[512];
+//
+.shared .align 2 .b8 _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_B[512];
+
+ld.param.u64 %rd4, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0];
+ld.param.u64 %rd5, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1];
+ld.param.u64 %rd6, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2];
+ld.param.u32 %r40, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3];
+ld.param.u32 %r41, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4];
+ld.param.u32 %r42, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5];
+ld.param.u64 %rd7, [_Z32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6];
+mov.u32 %r1, %ctaid.x;
+mov.u32 %r2, %tid.x;
+or.b32 %r43, %r2, %r1;
+mov.u32 %r3, %ctaid.y;
+or.b32 %r4, %r43, %r3;
+setp.ne.s32 %p1, %r4, 0;
+cvta.to.global.u64 %rd1, %rd7;
+@%p1 bra $L__BB1_2;
+
+//
+mov.u64 %rd8, %clock64;
+//
+st.global.u64 [%rd1+144], %rd8;
+//
+mov.u64 %rd9, %clock64;
+//
+st.global.u64 [%rd1+32], %rd9;
+//
+mov.u64 %rd10, %clock64;
+//
+st.global.u64 [%rd1+40], %rd10;
+
+$L__BB1_2:
+shl.b32 %r5, %r3, 4;
+setp.ge.s32 %p2, %r5, %r40;
+shl.b32 %r6, %r1, 4;
+setp.ge.s32 %p3, %r6, %r41;
+or.pred %p4, %p2, %p3;
+@%p4 bra $L__BB1_29;
+
+@%p1 bra $L__BB1_5;
+
+//
+mov.u64 %rd11, %clock64;
+//
+st.global.u64 [%rd1], %rd11;
+//
+mov.u64 %rd12, %clock64;
+//
+st.global.u64 [%rd1+8], %rd12;
+//
+mov.u64 %rd13, %clock64;
+//
+st.global.u64 [%rd1+16], %rd13;
+//
+mov.u64 %rd14, %clock64;
+//
+st.global.u64 [%rd1+24], %rd14;
+
+$L__BB1_5:
+setp.lt.s32 %p6, %r42, 16;
+mov.f32 %f57, 0f00000000;
+mov.f32 %f58, %f57;
+mov.f32 %f59, %f57;
+mov.f32 %f60, %f57;
+mov.f32 %f61, %f57;
+mov.f32 %f62, %f57;
+mov.f32 %f63, %f57;
+mov.f32 %f64, %f57;
+@%p6 bra $L__BB1_25;
+
+mov.u32 %r7, %ntid.x;
+cvta.to.global.u64 %rd2, %rd4;
+cvta.to.global.u64 %rd3, %rd5;
+mov.u32 %r71, 0;
+mov.u32 %r70, 16;
+mov.f32 %f57, 0f00000000;
+
+$L__BB1_7:
+mov.u32 %r8, %r70;
+or.b32 %r10, %r71, %r4;
+setp.ne.s32 %p7, %r10, 0;
+@%p7 bra $L__BB1_9;
+
+//
+mov.u64 %rd15, %clock64;
+//
+st.global.u64 [%rd1+48], %rd15;
+
+$L__BB1_9:
+setp.gt.s32 %p8, %r2, 255;
+@%p8 bra $L__BB1_18;
+
+mov.u32 %r72, %r2;
+
+$L__BB1_11:
+shr.s32 %r46, %r72, 31;
+shr.u32 %r47, %r46, 28;
+add.s32 %r48, %r72, %r47;
+shr.s32 %r12, %r48, 4;
+add.s32 %r13, %r12, %r5;
+setp.ge.s32 %p9, %r13, %r40;
+and.b32 %r49, %r48, -16;
+sub.s32 %r14, %r72, %r49;
+add.s32 %r15, %r14, %r71;
+setp.ge.s32 %p10, %r15, %r42;
+or.pred %p11, %p9, %p10;
+@%p11 bra $L__BB1_13;
+
+mad.lo.s32 %r50, %r13, %r42, %r15;
+mul.wide.s32 %rd16, %r50, 2;
+add.s64 %rd17, %rd2, %rd16;
+ld.global.u16 %rs1, [%rd17];
+shl.b32 %r51, %r12, 5;
+mov.u32 %r52, _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_A;
+add.s32 %r53, %r52, %r51;
+shl.b32 %r54, %r14, 1;
+add.s32 %r55, %r53, %r54;
+st.shared.u16 [%r55], %rs1;
+
+$L__BB1_13:
+add.s32 %r72, %r72, %r7;
+setp.lt.s32 %p12, %r72, 256;
+@%p12 bra $L__BB1_11;
+
+mov.u32 %r73, %r2;
+
+$L__BB1_15:
+shr.s32 %r56, %r73, 31;
+shr.u32 %r57, %r56, 28;
+add.s32 %r58, %r73, %r57;
+shr.s32 %r18, %r58, 4;
+add.s32 %r19, %r18, %r71;
+setp.ge.s32 %p13, %r19, %r42;
+and.b32 %r59, %r58, -16;
+sub.s32 %r20, %r73, %r59;
+add.s32 %r21, %r20, %r6;
+setp.ge.s32 %p14, %r21, %r41;
+or.pred %p15, %p13, %p14;
+@%p15 bra $L__BB1_17;
+
+mad.lo.s32 %r60, %r19, %r41, %r21;
+mul.wide.s32 %rd18, %r60, 2;
+add.s64 %rd19, %rd3, %rd18;
+ld.global.u16 %rs2, [%rd19];
+shl.b32 %r61, %r18, 5;
+mov.u32 %r62, _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_B;
+add.s32 %r63, %r62, %r61;
+shl.b32 %r64, %r20, 1;
+add.s32 %r65, %r63, %r64;
+st.shared.u16 [%r65], %rs2;
+
+$L__BB1_17:
+add.s32 %r73, %r73, %r7;
+setp.lt.s32 %p16, %r73, 256;
+@%p16 bra $L__BB1_15;
+
+$L__BB1_18:
+bar.sync 0;
+@%p7 bra $L__BB1_20;
+
+//
+mov.u64 %rd20, %clock64;
+//
+st.global.u64 [%rd1+56], %rd20;
+//
+mov.u64 %rd21, %clock64;
+//
+st.global.u64 [%rd1+80], %rd21;
+
+$L__BB1_20:
+mov.u32 %r66, 16;
+mov.u32 %r67, _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_A;
+wmma.load.a.sync.aligned.row.m16n16k16.shared.f16 {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, [%r67], %r66;
+mov.u32 %r68, _ZZ32tensor_core_shared_memory_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_B;
+wmma.load.b.sync.aligned.col.m16n16k16.shared.f16 {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, [%r68], %r66;
+@%p7 bra $L__BB1_22;
+
+//
+mov.u64 %rd24, %clock64;
+//
+st.global.u64 [%rd1+88], %rd24;
+//
+mov.u64 %rd25, %clock64;
+//
+st.global.u64 [%rd1+96], %rd25;
+
+$L__BB1_22:
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+@%p7 bra $L__BB1_24;
+
+//
+mov.u64 %rd26, %clock64;
+//
+st.global.u64 [%rd1+104], %rd26;
+
+$L__BB1_24:
+bar.sync 0;
+add.s32 %r70, %r8, 16;
+setp.le.s32 %p20, %r70, %r42;
+setp.lt.s32 %p21, %r8, %r42;
+and.pred %p22, %p21, %p20;
+mov.u32 %r71, %r8;
+@%p22 bra $L__BB1_7;
+
+$L__BB1_25:
+@%p1 bra $L__BB1_27;
+
+//
+mov.u64 %rd27, %clock64;
+//
+st.global.u64 [%rd1+112], %rd27;
+
+$L__BB1_27:
+mad.lo.s32 %r69, %r5, %r41, %r6;
+cvta.to.global.u64 %rd28, %rd6;
+mul.wide.s32 %rd29, %r69, 4;
+add.s64 %rd30, %rd28, %rd29;
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd30], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r41;
+@%p1 bra $L__BB1_29;
+
+//
+mov.u64 %rd31, %clock64;
+//
+st.global.u64 [%rd1+120], %rd31;
+//
+mov.u64 %rd32, %clock64;
+//
+st.global.u64 [%rd1+152], %rd32;
+
+$L__BB1_29:
+ret;
+
+}
+//
+.visible .entry _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo(
+.param .u64 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0,
+.param .u64 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1,
+.param .u64 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2,
+.param .u32 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3,
+.param .u32 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4,
+.param .u32 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5,
+.param .u64 _Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6
+)
+{
+.reg .pred %p<11>;
+.reg .b16 %rs<11>;
+.reg .f32 %f<30>;
+.reg .b32 %r<40>;
+.reg .b64 %rd<34>;
+
+
+ld.param.u64 %rd13, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0];
+ld.param.u64 %rd14, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1];
+ld.param.u64 %rd11, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2];
+ld.param.u32 %r23, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3];
+ld.param.u32 %r21, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4];
+ld.param.u32 %r22, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5];
+ld.param.u64 %rd12, [_Z16cuda_core_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6];
+cvta.to.global.u64 %rd1, %rd14;
+cvta.to.global.u64 %rd2, %rd13;
+mov.u32 %r24, %ntid.y;
+mov.u32 %r1, %ctaid.y;
+mov.u32 %r2, %tid.y;
+mad.lo.s32 %r3, %r1, %r24, %r2;
+mov.u32 %r25, %ntid.x;
+mov.u32 %r4, %ctaid.x;
+mov.u32 %r5, %tid.x;
+mad.lo.s32 %r6, %r4, %r25, %r5;
+setp.ge.s32 %p1, %r3, %r23;
+setp.ge.s32 %p2, %r6, %r21;
+or.pred %p3, %p1, %p2;
+@%p3 bra $L__BB2_12;
+
+or.b32 %r26, %r5, %r2;
+or.b32 %r27, %r26, %r4;
+or.b32 %r7, %r27, %r1;
+setp.ne.s32 %p4, %r7, 0;
+cvta.to.global.u64 %rd15, %rd12;
+add.s64 %rd3, %rd15, 144;
+@%p4 bra $L__BB2_3;
+
+//
+mov.u64 %rd16, %clock64;
+//
+st.global.u64 [%rd3], %rd16;
+//
+mov.u64 %rd17, %clock64;
+//
+st.global.u64 [%rd3+-16], %rd17;
+
+$L__BB2_3:
+setp.lt.s32 %p5, %r22, 1;
+mov.f32 %f29, 0f00000000;
+@%p5 bra $L__BB2_10;
+
+add.s32 %r29, %r22, -1;
+and.b32 %r39, %r22, 3;
+setp.lt.u32 %p6, %r29, 3;
+mov.f32 %f29, 0f00000000;
+mov.u32 %r37, 0;
+@%p6 bra $L__BB2_7;
+
+mul.lo.s32 %r31, %r22, %r3;
+mul.wide.s32 %rd18, %r31, 2;
+add.s64 %rd32, %rd2, %rd18;
+shl.b32 %r9, %r21, 2;
+sub.s32 %r10, %r39, %r22;
+mul.wide.s32 %rd5, %r21, 2;
+mov.f32 %f29, 0f00000000;
+mov.u32 %r37, 0;
+mov.u32 %r35, %r6;
+
+$L__BB2_6:
+ld.global.u16 %rs1, [%rd32];
+//
+{ cvt.f32.f16 %f12, %rs1;}
+
+//
+mul.wide.s32 %rd19, %r35, 2;
+add.s64 %rd20, %rd1, %rd19;
+ld.global.u16 %rs2, [%rd20];
+//
+{ cvt.f32.f16 %f13, %rs2;}
+
+//
+fma.rn.f32 %f20, %f12, %f13, %f29;
+ld.global.u16 %rs3, [%rd32+2];
+//
+{ cvt.f32.f16 %f14, %rs3;}
+
+//
+add.s64 %rd21, %rd20, %rd5;
+ld.global.u16 %rs4, [%rd21];
+//
+{ cvt.f32.f16 %f15, %rs4;}
+
+//
+fma.rn.f32 %f21, %f14, %f15, %f20;
+ld.global.u16 %rs5, [%rd32+4];
+//
+{ cvt.f32.f16 %f16, %rs5;}
+
+//
+add.s64 %rd22, %rd21, %rd5;
+ld.global.u16 %rs6, [%rd22];
+//
+{ cvt.f32.f16 %f17, %rs6;}
+
+//
+fma.rn.f32 %f22, %f16, %f17, %f21;
+ld.global.u16 %rs7, [%rd32+6];
+//
+{ cvt.f32.f16 %f18, %rs7;}
+
+//
+add.s64 %rd23, %rd22, %rd5;
+ld.global.u16 %rs8, [%rd23];
+//
+{ cvt.f32.f16 %f19, %rs8;}
+
+//
+fma.rn.f32 %f29, %f18, %f19, %f22;
+add.s64 %rd32, %rd32, 8;
+add.s32 %r35, %r35, %r9;
+add.s32 %r37, %r37, 4;
+add.s32 %r32, %r10, %r37;
+setp.ne.s32 %p7, %r32, 0;
+@%p7 bra $L__BB2_6;
+
+$L__BB2_7:
+setp.eq.s32 %p8, %r39, 0;
+@%p8 bra $L__BB2_10;
+
+mad.lo.s32 %r38, %r37, %r21, %r6;
+mad.lo.s32 %r33, %r22, %r3, %r37;
+mul.wide.s32 %rd24, %r33, 2;
+add.s64 %rd33, %rd2, %rd24;
+
+$L__BB2_9:
+.pragma "nounroll";
+ld.global.u16 %rs9, [%rd33];
+//
+{ cvt.f32.f16 %f23, %rs9;}
+
+//
+mul.wide.s32 %rd25, %r38, 2;
+add.s64 %rd26, %rd1, %rd25;
+ld.global.u16 %rs10, [%rd26];
+//
+{ cvt.f32.f16 %f24, %rs10;}
+
+//
+fma.rn.f32 %f29, %f23, %f24, %f29;
+add.s32 %r38, %r38, %r21;
+add.s64 %rd33, %rd33, 2;
+add.s32 %r39, %r39, -1;
+setp.ne.s32 %p9, %r39, 0;
+@%p9 bra $L__BB2_9;
+
+$L__BB2_10:
+mad.lo.s32 %r34, %r3, %r21, %r6;
+cvta.to.global.u64 %rd27, %rd11;
+mul.wide.s32 %rd28, %r34, 4;
+add.s64 %rd29, %rd27, %rd28;
+st.global.f32 [%rd29], %f29;
+@%p4 bra $L__BB2_12;
+
+//
+mov.u64 %rd30, %clock64;
+//
+st.global.u64 [%rd3+-8], %rd30;
+//
+mov.u64 %rd31, %clock64;
+//
+st.global.u64 [%rd3+8], %rd31;
+
+$L__BB2_12:
+ret;
+
+}
+//
+.visible .entry _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo(
+.param .u64 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0,
+.param .u64 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1,
+.param .u64 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2,
+.param .u32 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3,
+.param .u32 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4,
+.param .u32 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5,
+.param .u64 _Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6
+)
+{
+.reg .pred %p<17>;
+.reg .b16 %rs<43>;
+.reg .f32 %f<57>;
+.reg .b32 %r<61>;
+.reg .b64 %rd<27>;
+//
+.shared .align 2 .b8 _ZZ23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_A[512];
+//
+.shared .align 2 .b8 _ZZ23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_B[512];
+
+ld.param.u64 %rd5, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_0];
+ld.param.u64 %rd6, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_1];
+ld.param.u64 %rd7, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_2];
+ld.param.u32 %r20, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_3];
+ld.param.u32 %r21, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_4];
+ld.param.u32 %r22, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_5];
+ld.param.u64 %rd8, [_Z23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfo_param_6];
+mov.u32 %r58, %tid.y;
+mov.u32 %r57, %tid.x;
+or.b32 %r23, %r57, %r58;
+mov.u32 %r3, %ctaid.x;
+or.b32 %r24, %r23, %r3;
+mov.u32 %r4, %ctaid.y;
+or.b32 %r5, %r24, %r4;
+setp.ne.s32 %p1, %r5, 0;
+cvta.to.global.u64 %rd9, %rd8;
+add.s64 %rd1, %rd9, 144;
+@%p1 bra $L__BB3_2;
+
+//
+mov.u64 %rd10, %clock64;
+//
+st.global.u64 [%rd1], %rd10;
+//
+mov.u64 %rd11, %clock64;
+//
+st.global.u64 [%rd1+-112], %rd11;
+//
+mov.u64 %rd12, %clock64;
+//
+st.global.u64 [%rd1+-104], %rd12;
+
+$L__BB3_2:
+shl.b32 %r25, %r4, 4;
+add.s32 %r6, %r25, %r58;
+shl.b32 %r7, %r3, 4;
+add.s32 %r8, %r7, %r57;
+setp.lt.s32 %p2, %r22, 1;
+mov.f32 %f56, 0f00000000;
+@%p2 bra $L__BB3_17;
+
+mad.lo.s32 %r27, %r58, %r21, %r57;
+add.s32 %r59, %r27, %r7;
+mad.lo.s32 %r28, %r22, %r6, %r57;
+cvta.to.global.u64 %rd13, %rd5;
+mul.wide.s32 %rd14, %r28, 2;
+add.s64 %rd26, %rd13, %rd14;
+add.s32 %r29, %r22, 15;
+shr.s32 %r30, %r29, 31;
+shr.u32 %r31, %r30, 28;
+add.s32 %r32, %r29, %r31;
+shr.s32 %r10, %r32, 4;
+mov.f32 %f56, 0f00000000;
+mov.u32 %r60, 0;
+cvta.to.global.u64 %rd16, %rd6;
+
+$L__BB3_4:
+or.b32 %r15, %r60, %r5;
+setp.ne.s32 %p3, %r15, 0;
+@%p3 bra $L__BB3_6;
+
+//
+mov.u64 %rd15, %clock64;
+//
+st.global.u64 [%rd1+-96], %rd15;
+
+$L__BB3_6:
+setp.lt.s32 %p4, %r6, %r20;
+setp.lt.s32 %p5, %r57, %r22;
+and.pred %p6, %p4, %p5;
+@%p6 bra $L__BB3_8;
+bra.uni $L__BB3_7;
+
+$L__BB3_8:
+ld.global.u16 %rs41, [%rd26];
+bra.uni $L__BB3_9;
+
+$L__BB3_7:
+mov.f32 %f6, 0f00000000;
+//
+{ cvt.rn.f16.f32 %rs41, %f6;}
+
+//
+
+$L__BB3_9:
+mov.u32 %r33, %tid.x;
+mov.u32 %r34, %tid.y;
+shl.b32 %r35, %r34, 5;
+mov.u32 %r36, _ZZ23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_A;
+add.s32 %r37, %r36, %r35;
+shl.b32 %r38, %r33, 1;
+add.s32 %r39, %r37, %r38;
+st.shared.u16 [%r39], %rs41;
+setp.lt.s32 %p7, %r58, %r22;
+setp.lt.s32 %p8, %r8, %r21;
+and.pred %p9, %p8, %p7;
+@%p9 bra $L__BB3_11;
+bra.uni $L__BB3_10;
+
+$L__BB3_11:
+mul.wide.s32 %rd17, %r59, 2;
+add.s64 %rd18, %rd16, %rd17;
+ld.global.u16 %rs42, [%rd18];
+bra.uni $L__BB3_12;
+
+$L__BB3_10:
+mov.f32 %f7, 0f00000000;
+//
+{ cvt.rn.f16.f32 %rs42, %f7;}
+
+//
+
+$L__BB3_12:
+mov.u32 %r43, _ZZ23cuda_core_shared_kernelP6__halfS0_PfiiiP16DeviceTimingInfoE8shared_B;
+add.s32 %r44, %r43, %r35;
+add.s32 %r46, %r44, %r38;
+st.shared.u16 [%r46], %rs42;
+bar.sync 0;
+@%p3 bra $L__BB3_14;
+
+//
+mov.u64 %rd19, %clock64;
+//
+st.global.u64 [%rd1+-88], %rd19;
+//
+mov.u64 %rd20, %clock64;
+//
+st.global.u64 [%rd1+-16], %rd20;
+
+$L__BB3_14:
+ld.shared.u16 %rs9, [%r37];
+//
+{ cvt.f32.f16 %f8, %rs9;}
+
+//
+add.s32 %r54, %r43, %r38;
+ld.shared.u16 %rs10, [%r54];
+//
+{ cvt.f32.f16 %f9, %rs10;}
+
+//
+fma.rn.f32 %f40, %f8, %f9, %f56;
+ld.shared.u16 %rs11, [%r37+2];
+//
+{ cvt.f32.f16 %f10, %rs11;}
+
+//
+ld.shared.u16 %rs12, [%r54+32];
+//
+{ cvt.f32.f16 %f11, %rs12;}
+
+//
+fma.rn.f32 %f41, %f10, %f11, %f40;
+ld.shared.u16 %rs13, [%r37+4];
+//
+{ cvt.f32.f16 %f12, %rs13;}
+
+//
+ld.shared.u16 %rs14, [%r54+64];
+//
+{ cvt.f32.f16 %f13, %rs14;}
+
+//
+fma.rn.f32 %f42, %f12, %f13, %f41;
+ld.shared.u16 %rs15, [%r37+6];
+//
+{ cvt.f32.f16 %f14, %rs15;}
+
+//
+ld.shared.u16 %rs16, [%r54+96];
+//
+{ cvt.f32.f16 %f15, %rs16;}
+
+//
+fma.rn.f32 %f43, %f14, %f15, %f42;
+ld.shared.u16 %rs17, [%r37+8];
+//
+{ cvt.f32.f16 %f16, %rs17;}
+
+//
+ld.shared.u16 %rs18, [%r54+128];
+//
+{ cvt.f32.f16 %f17, %rs18;}
+
+//
+fma.rn.f32 %f44, %f16, %f17, %f43;
+ld.shared.u16 %rs19, [%r37+10];
+//
+{ cvt.f32.f16 %f18, %rs19;}
+
+//
+ld.shared.u16 %rs20, [%r54+160];
+//
+{ cvt.f32.f16 %f19, %rs20;}
+
+//
+fma.rn.f32 %f45, %f18, %f19, %f44;
+ld.shared.u16 %rs21, [%r37+12];
+//
+{ cvt.f32.f16 %f20, %rs21;}
+
+//
+ld.shared.u16 %rs22, [%r54+192];
+//
+{ cvt.f32.f16 %f21, %rs22;}
+
+//
+fma.rn.f32 %f46, %f20, %f21, %f45;
+ld.shared.u16 %rs23, [%r37+14];
+//
+{ cvt.f32.f16 %f22, %rs23;}
+
+//
+ld.shared.u16 %rs24, [%r54+224];
+//
+{ cvt.f32.f16 %f23, %rs24;}
+
+//
+fma.rn.f32 %f47, %f22, %f23, %f46;
+ld.shared.u16 %rs25, [%r37+16];
+//
+{ cvt.f32.f16 %f24, %rs25;}
+
+//
+ld.shared.u16 %rs26, [%r54+256];
+//
+{ cvt.f32.f16 %f25, %rs26;}
+
+//
+fma.rn.f32 %f48, %f24, %f25, %f47;
+ld.shared.u16 %rs27, [%r37+18];
+//
+{ cvt.f32.f16 %f26, %rs27;}
+
+//
+ld.shared.u16 %rs28, [%r54+288];
+//
+{ cvt.f32.f16 %f27, %rs28;}
+
+//
+fma.rn.f32 %f49, %f26, %f27, %f48;
+ld.shared.u16 %rs29, [%r37+20];
+//
+{ cvt.f32.f16 %f28, %rs29;}
+
+//
+ld.shared.u16 %rs30, [%r54+320];
+//
+{ cvt.f32.f16 %f29, %rs30;}
+
+//
+fma.rn.f32 %f50, %f28, %f29, %f49;
+ld.shared.u16 %rs31, [%r37+22];
+//
+{ cvt.f32.f16 %f30, %rs31;}
+
+//
+ld.shared.u16 %rs32, [%r54+352];
+//
+{ cvt.f32.f16 %f31, %rs32;}
+
+//
+fma.rn.f32 %f51, %f30, %f31, %f50;
+ld.shared.u16 %rs33, [%r37+24];
+//
+{ cvt.f32.f16 %f32, %rs33;}
+
+//
+ld.shared.u16 %rs34, [%r54+384];
+//
+{ cvt.f32.f16 %f33, %rs34;}
+
+//
+fma.rn.f32 %f52, %f32, %f33, %f51;
+ld.shared.u16 %rs35, [%r37+26];
+//
+{ cvt.f32.f16 %f34, %rs35;}
+
+//
+ld.shared.u16 %rs36, [%r54+416];
+//
+{ cvt.f32.f16 %f35, %rs36;}
+
+//
+fma.rn.f32 %f53, %f34, %f35, %f52;
+ld.shared.u16 %rs37, [%r37+28];
+//
+{ cvt.f32.f16 %f36, %rs37;}
+
+//
+ld.shared.u16 %rs38, [%r54+448];
+//
+{ cvt.f32.f16 %f37, %rs38;}
+
+//
+fma.rn.f32 %f54, %f36, %f37, %f53;
+ld.shared.u16 %rs39, [%r37+30];
+//
+{ cvt.f32.f16 %f38, %rs39;}
+
+//
+ld.shared.u16 %rs40, [%r54+480];
+//
+{ cvt.f32.f16 %f39, %rs40;}
+
+//
+fma.rn.f32 %f56, %f38, %f39, %f54;
+@%p3 bra $L__BB3_16;
+
+//
+mov.u64 %rd21, %clock64;
+//
+st.global.u64 [%rd1+-8], %rd21;
+
+$L__BB3_16:
+bar.sync 0;
+shl.b32 %r55, %r21, 4;
+add.s32 %r59, %r59, %r55;
+add.s32 %r58, %r58, 16;
+add.s64 %rd26, %rd26, 32;
+add.s32 %r57, %r57, 16;
+add.s32 %r60, %r60, 1;
+setp.lt.s32 %p12, %r60, %r10;
+@%p12 bra $L__BB3_4;
+
+$L__BB3_17:
+setp.ge.s32 %p13, %r8, %r21;
+setp.ge.s32 %p14, %r6, %r20;
+or.pred %p15, %p14, %p13;
+@%p15 bra $L__BB3_19;
+
+mad.lo.s32 %r56, %r6, %r21, %r8;
+cvta.to.global.u64 %rd22, %rd7;
+mul.wide.s32 %rd23, %r56, 4;
+add.s64 %rd24, %rd22, %rd23;
+st.global.f32 [%rd24], %f56;
+
+$L__BB3_19:
+@%p1 bra $L__BB3_21;
+
+//
+mov.u64 %rd25, %clock64;
+//
+st.global.u64 [%rd1+8], %rd25;
+
+$L__BB3_21:
+ret;
+
+}
+
+
