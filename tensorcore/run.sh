@@ -49,10 +49,6 @@ echo "Generating PTX and SASS files..."
 cuobjdump -ptx tensor_core_nv > ${PTX_FILE}
 cuobjdump --dump-sass tensor_core_nv > ${SASS_FILE}
 
-# PTX/SASSファイルを適切なディレクトリに移動
-mv -v ${PTX_FILE} ptx/
-mv -v ${SASS_FILE} sass/
-
 echo "PTXファイル生成完了: ptx/${PTX_FILE}"
 echo "SASSファイル生成完了: sass/${SASS_FILE}"
 
@@ -84,4 +80,12 @@ echo "SASSコード: sass/${SASS_FILE}"
 echo "実行結果: result/${RESULT_FILE}"
 
 # 結果ファイルへのリンクを作成
-mv latest_result.txt "result/${RESULT_FILE}"
+if [ $? -eq 0 ]; then
+    mv latest_result.txt "result/${RESULT_FILE}"
+    # PTX/SASSファイルを適切なディレクトリに移動
+    mv -v ${PTX_FILE} ptx/
+    mv -v ${SASS_FILE} sass/
+else
+    echo "matmul_multistream の実行中にエラーが発生しました。" >&2
+    exit 1
+fi

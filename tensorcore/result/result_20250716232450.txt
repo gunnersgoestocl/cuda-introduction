@@ -1,0 +1,69 @@
+/work/opt/local/aarch64/cores/cuda/12.6/bin/nvcc
+rm -f tensor_core_nv *.o *.ptx *.sass
+nvcc -O3 -arch=sm_90 -std=c++17 tensor_core_nv.cu -o tensor_core_nv
+cuobjdump -ptx tensor_core_nv > tensor_core_nv_202507162324.ptx
+cuobjdump --dump-sass tensor_core_nv > tensor_core_nv_202507162324.sass
+PTXファイル生成完了: tensor_core_nv_202507162324.ptx
+SASSファイル生成完了: tensor_core_nv_202507162324.sass
+TensorCore関連命令の検索結果:
+wmma.load.a.sync.aligned.row.m16n16k16.global.f16 {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, [%rd15], %r28;
+wmma.load.b.sync.aligned.col.m16n16k16.global.f16 {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, [%rd17], %r27;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd24], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r27;
+wmma.load.a.sync.aligned.row.m16n16k16.shared.f16 {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, [%r67], %r66;
+wmma.load.b.sync.aligned.col.m16n16k16.shared.f16 {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, [%r68], %r66;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd30], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r41;
+Generating PTX and SASS files...
+PTXファイル生成完了: ptx/tensor_core_nv_20250716232450.ptx
+SASSファイル生成完了: sass/tensor_core_nv_20250716232450.sass
+TensorCore関連命令の検索結果:
+grep: sass/tensor_core_nv_20250716232450.sass: No such file or directory
+
+=== 実行結果 ===
+Using GPU: NVIDIA GH200 120GB (Compute Capability 9.0)
+Initializing matrices...
+Computing reference solution on CPU...
+Running benchmarks (5 iterations)...
+  Run 1/5
+  Run 2/5
+  Run 3/5
+  Run 4/5
+  Run 5/5
+Validating results...
+
+===== Performance Results =====
+Matrix Size: 1024 x 1024 x 1024
+CPU Time: 2.821698 seconds
+
+TensorCore Global (FAILED): 0.000104 seconds (27053.46x speedup)
+TensorCore Shared (FAILED): 0.000272 seconds (10392.72x speedup)
+CUDA Core Global (PASSED): 0.000495 seconds (5700.09x speedup)
+CUDA Core Shared (PASSED): 0.000316 seconds (8918.95x speedup)
+
+=== VISUALIZATION_DATA_START ===
+TOTAL_COMPUTE_TIME,CUDA_Core_Global,495.027
+TOTAL_COMPUTE_TIME,CUDA_Core_Shared,316.371
+TOTAL_COMPUTE_TIME,TensorCore_Global,104.301
+TOTAL_COMPUTE_TIME,TensorCore_Shared,271.507
+OPERATION_TIME,CUDA_Core_Memory_Compute,0.325442
+OPERATION_TIME,CUDA_Core_Shared_Declare,0.0115152
+OPERATION_TIME,CUDA_Core_Global_to_Shared,0.311919
+OPERATION_TIME,CUDA_Core_Shared_Compute,0.197677
+OPERATION_TIME,TensorCore_Fragment_Declare,0.0135354
+OPERATION_TIME,TensorCore_Fragment_Init,0.0113131
+OPERATION_TIME,TensorCore_Global_to_Frag,0.248283
+OPERATION_TIME,TensorCore_Frag_to_Global,0.0542424
+OPERATION_TIME,TensorCore_Global_to_Shared,3.73727
+OPERATION_TIME,TensorCore_Shared_to_Frag,0.0781818
+OPERATION_TIME,TensorCore_MMA_Sync,0.738182
+=== VISUALIZATION_DATA_END ===
+
+=== 実験完了 ===
+タイムスタンプ: 20250716232450
+ソースコード: src/tensor_core_nv_20250716232450.cu
+PTXコード: ptx/tensor_core_nv_20250716232450.ptx
+SASSコード: sass/tensor_core_nv_20250716232450.sass
+実行結果: result/result_20250716232450.txt
+renamed 'tensor_core_nv_20250716232450.ptx' -> 'ptx/tensor_core_nv_20250716232450.ptx'
+renamed 'tensor_core_nv_20250716232450.sass' -> 'sass/tensor_core_nv_20250716232450.sass'

@@ -1,0 +1,197 @@
+rm -f  matmul_multidevice matmul_multinode
+nvcc -arch=sm_90 matmul_multidevice.cu -o matmul_multidevice
+nvcc -arch=sm_90 -O3 -I/work/opt/local/aarch64/apps/nvidia/24.9/ompi-cuda/4.1.6-12.6/include -L/work/opt/local/aarch64/apps/nvidia/24.9/ompi-cuda/4.1.6-12.6/lib:/work/opt/local/aarch64/cores/cuda/12.6/lib64 matmul_multinode.cu -o matmul_multinode -lmpi
+利用可能なMPIプロセス数（GPU数）: 16
+
+===== 各ノードのGPU情報 =====
+ランク 0 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 1 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 2 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 3 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 4 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 5 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 6 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 7 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 8 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 9 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 10 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 11 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 12 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 13 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 14 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 15 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+
+===== パラメータ設定 =====
+行列サイズ: 32768 x 32768
+スカラー値: 2.0
+使用GPU数: 16
+
+行列の初期化中...
+元の行列 (32768x32768) の一部:
+     1.0      2.0      3.0  ...  32767.0  32768.0 
+ 32769.0  32770.0  32771.0  ...  65535.0  65536.0 
+ ... 
+1073676288.0 1073676288.0 1073676288.0  ... 1073709056.0 1073709056.0 
+1073709056.0 1073709056.0 1073709056.0  ... 1073741824.0 1073741824.0 
+
+
+===== シングルGPU処理開始 =====
+シングルGPU処理完了: 0.040743 秒
+
+===== マルチGPU処理開始 (16 GPUs) =====
+
+===== 詳細なタイミング分析 =====
+1. データ分配時間: 0.175515 秒 (全体の 36.6%)
+2. ホスト→デバイス転送: 0.002373 秒 (全体の 0.5%)
+3. カーネル実行時間: 0.000338 秒 (全体の 0.1%)
+4. デバイス→ホスト転送: 0.001222 秒 (全体の 0.3%)
+5. 結果収集時間: 0.229198 秒 (全体の 47.8%)
+
+主なボトルネック: 結果収集 (47.8% of total time)
+マルチGPU処理完了: 0.479813 秒
+
+===== 性能比較 =====
+シングルGPU実行時間: 0.040743 秒
+マルチGPU実行時間(16 GPUs): 0.479813 秒
+高速化率: 0.08倍
+効率: 0.53%
+
+===== 結果検証 =====
+シングルGPUとマルチGPUの結果は一致しています。
+シングルGPUでの処理後行列 (32768x32768) の一部:
+     2.0      4.0      6.0  ...  65534.0  65536.0 
+ 65538.0  65540.0  65542.0  ... 131070.0 131072.0 
+ ... 
+2147352576.0 2147352576.0 2147352576.0  ... 2147418112.0 2147418112.0 
+2147418112.0 2147418112.0 2147418112.0  ... 2147483648.0 2147483648.0 
+
+マルチGPUでの処理後行列 (32768x32768) の一部:
+     2.0      4.0      6.0  ...  65534.0  65536.0 
+ 65538.0  65540.0  65542.0  ... 131070.0 131072.0 
+ ... 
+2147352576.0 2147352576.0 2147352576.0  ... 2147418112.0 2147418112.0 
+2147418112.0 2147418112.0 2147418112.0  ... 2147483648.0 2147483648.0 
+
+
+===== TIMING_DATA_CSV_START =====
+rank,data_distribution,host_to_device,kernel_execution,device_to_host,data_collection,total_time
+0,0.294426,0.003420,0.000282,0.001190,0.180461,0.479793
+1,0.040148,0.001316,0.000341,0.001286,0.284929,0.328067
+2,0.058275,0.001273,0.000345,0.001217,0.277750,0.338880
+3,0.076555,0.002537,0.000338,0.001204,0.269092,0.349742
+4,0.094675,0.002567,0.000349,0.001220,0.261738,0.360560
+5,0.112716,0.003064,0.000342,0.001226,0.254059,0.371421
+6,0.130944,0.002587,0.000340,0.001221,0.247100,0.382235
+7,0.149419,0.003142,0.000340,0.001219,0.238938,0.393099
+8,0.167746,0.003442,0.000339,0.001222,0.231166,0.403924
+9,0.186267,0.003473,0.000340,0.001230,0.223454,0.414782
+10,0.204500,0.001314,0.000352,0.001231,0.218182,0.425594
+11,0.222713,0.001295,0.000341,0.001216,0.210887,0.436463
+12,0.240635,0.001319,0.000346,0.001212,0.203721,0.447278
+13,0.258443,0.002527,0.000334,0.001216,0.195603,0.458136
+14,0.276341,0.003416,0.000346,0.001227,0.187579,0.468950
+15,0.294441,0.001283,0.000339,0.001220,0.182516,0.479813
+===== TIMING_DATA_CSV_END =====
+/var/spool/pbs/mom_priv/jobs/609524.opbs.SC: line 38: result/: Is a directory
+結果ファイル: result/result_multinode_20250716211630.txt
+CSVファイル: result/
+Traceback (most recent call last):
+  File "/work/gc64/c64098/spring-training/cuda-introduction/multinode/visualize_timing.py", line 1, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'

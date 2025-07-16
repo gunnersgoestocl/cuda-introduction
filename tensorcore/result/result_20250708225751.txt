@@ -1,0 +1,137 @@
+/work/opt/local/aarch64/cores/cuda/12.6/bin/nvcc
+rm -f tensor_core_nv *.o *.ptx *.sass
+nvcc -O3 -arch=sm_90 -std=c++17 tensor_core_nv.cu -o tensor_core_nv
+cuobjdump -ptx tensor_core_nv > tensor_core_nv_202507082257.ptx
+cuobjdump --dump-sass tensor_core_nv > tensor_core_nv_202507082257.sass
+PTXファイル生成完了: tensor_core_nv_202507082257.ptx
+SASSファイル生成完了: tensor_core_nv_202507082257.sass
+TensorCore関連命令の検索結果:
+wmma.load.a.sync.aligned.row.m16n16k16.global.f16 {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, [%rd15], %r28;
+wmma.load.b.sync.aligned.col.m16n16k16.global.f16 {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, [%rd17], %r27;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, {%r18, %r19, %r20, %r21, %r22, %r23, %r24, %r25}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd25], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r27;
+wmma.load.a.sync.aligned.row.m16n16k16.shared.f16 {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, [%r67], %r66;
+wmma.load.b.sync.aligned.col.m16n16k16.shared.f16 {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, [%r68], %r66;
+wmma.mma.sync.aligned.row.col.m16n16k16.f32.f32 {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, {%r23, %r24, %r25, %r26, %r27, %r28, %r29, %r30}, {%r31, %r32, %r33, %r34, %r35, %r36, %r37, %r38}, {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57};
+wmma.store.d.sync.aligned.row.m16n16k16.global.f32 [%rd27], {%f64, %f63, %f62, %f61, %f60, %f59, %f58, %f57}, %r41;
+Generating PTX and SASS files...
+PTXファイル生成完了: ptx/tensor_core_nv_20250708225751.ptx
+SASSファイル生成完了: sass/tensor_core_nv_20250708225751.sass
+TensorCore関連命令の検索結果:
+grep: sass/tensor_core_nv_20250708225751.sass: No such file or directory
+
+=== 実行結果 ===
+Using GPU: NVIDIA GH200 120GB (Compute Capability 9.0)
+GPU Clock Rate: 1.98 GHz
+Tensor Core support detected!
+Initializing matrices...
+Computing reference solution on CPU...
+Warming up GPU...
+Running benchmarks (5 iterations)...
+  Run 1/5
+  Run 2/5
+  Run 3/5
+  Run 4/5
+  Run 5/5
+Validating results...
+Mismatch at (0, 0): GPU=206.377365, CPU=206.690445
+Mismatch at (0, 0): GPU=206.377365, CPU=206.690445
+
+===== Detailed Performance Results =====
+Matrix Size: 1024 x 1024 x 1024
+CPU Time: 2.854506 seconds
+
+--- Tensor Core (Global Memory) (FAILED) ---
+Total Time: 4.698605 seconds
+  Copy H->D:     0.032742 seconds (0.7%)
+  Kernel Total:  0.088653 seconds (1.9%)
+    Fragment Declare: 0.000028889 seconds
+    Fragment Init:    0.000013232 seconds
+    Total Compute:    0.000072876 seconds
+    Store:            0.000058182 seconds
+  Copy D->H:     0.021146 seconds (0.5%)
+  Additional Info:
+    Single Step Compute: 0.000000000 seconds
+    Single Load:         0.000000000 seconds
+
+--- Tensor Core (Shared Memory) (FAILED) ---
+Total Time: 0.005313 seconds
+  Copy H->D:     0.000034 seconds (0.6%)
+  Kernel Total:  0.000266 seconds (5.0%)
+    Fragment Declare: 0.000025253 seconds
+    Fragment Init:    0.000012424 seconds
+    Total Compute:    0.000237946 seconds
+    Store:            0.000000282 seconds
+  Copy D->H:     0.000022 seconds (0.4%)
+  Additional Info:
+    Single Step Compute: 0.000000000 seconds
+    Single Load:         0.000000000 seconds
+
+--- CUDA Core (Global Memory) (PASSED) ---
+Total Time: 0.008304 seconds
+  Copy H->D:     0.000034 seconds (0.4%)
+  Kernel Total:  0.000499 seconds (6.0%)
+    Total Compute:    0.000000000 seconds
+    Store:            0.000000049 seconds
+  Copy D->H:     0.002996 seconds (36.1%)
+  Additional Info:
+    Single Step Compute: 0.000000000 seconds
+
+--- CUDA Core (Shared Memory) (PASSED) ---
+Total Time: 0.012138 seconds
+  Copy H->D:     0.000034 seconds (0.3%)
+  Kernel Total:  0.000316 seconds (2.6%)
+    Total Compute:    0.000036705 seconds
+    Store:            0.000000061 seconds
+  Copy D->H:     0.002711 seconds (22.3%)
+  Additional Info:
+    Single Step Compute: 0.000000000 seconds
+    Single Load:         0.000000000 seconds
+
+===== Phase Comparison (Global vs Shared) =====
+Total Kernel Time: 0.00x slower with shared memory
+Data Loading:      nanx slower with shared memory
+Computation:       3.27x different with shared memory
+Result Storage:    0.00x different with shared memory
+
+===== Detailed Analysis =====
+Shared Memory Overhead: 0.000000000 seconds
+  - Global->Shared:     0.000000000 seconds
+  - Shared->Frag:       0.000000000 seconds
+  - Direct Global->Frag: 0.000000000 seconds
+Synchronization Overhead: 0.000000000 seconds (0.0% of shared kernel time)
+Compute Performance:
+  - Global Memory: 29.47 TFLOPS
+  - Shared Memory: 9.03 TFLOPS
+
+===== Overall Comparison =====
+Total Execution Time:
+  CPU:                 2.854506 seconds
+  TensorCore Global:   4.698605 seconds (0.61x speedup vs CPU)
+  TensorCore Shared:   0.005313 seconds (537.28x speedup vs CPU)
+  CUDA Core Global:    0.008304 seconds (343.76x speedup vs CPU)
+  CUDA Core Shared:    0.012138 seconds (235.17x speedup vs CPU)
+
+=== TIMELINE_DATA_START ===
+PHASE,TensorCore_Global,Fragment_Declare,0,0.0288889
+PHASE,TensorCore_Global,Fragment_Init,0.0288889,0.0421212
+PHASE,TensorCore_Global,Total_Compute,0.0421212,0.114997
+PHASE,TensorCore_Global,Store,0.114997,0.173179
+PHASE,TensorCore_Shared,Fragment_Declare,0,0.0252525
+PHASE,TensorCore_Shared,Fragment_Init,0.0252525,0.0376768
+PHASE,TensorCore_Shared,Total_Compute,0.0376768,0.275623
+PHASE,TensorCore_Shared,Store,0.275623,0.275905
+PHASE,CudaCore_Global,Total_Compute,0,0
+PHASE,CudaCore_Global,Store,0,4.92929e-05
+PHASE,CudaCore_Shared,Total_Compute,0,0.0367046
+PHASE,CudaCore_Shared,Store,0.0367046,0.036766
+=== TIMELINE_DATA_END ===
+
+=== 実験完了 ===
+タイムスタンプ: 20250708225751
+ソースコード: src/tensor_core_nv_20250708225751.cu
+PTXコード: ptx/tensor_core_nv_20250708225751.ptx
+SASSコード: sass/tensor_core_nv_20250708225751.sass
+実行結果: result/result_20250708225751.txt
+renamed 'tensor_core_nv_20250708225751.ptx' -> 'ptx/tensor_core_nv_20250708225751.ptx'
+renamed 'tensor_core_nv_20250708225751.sass' -> 'sass/tensor_core_nv_20250708225751.sass'
