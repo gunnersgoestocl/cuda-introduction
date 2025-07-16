@@ -1,0 +1,26 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <random>
+
+int main() {
+    const int size = 768; // Dimension of the weights
+    const int num_weights = size * size; // Assuming a square matrix for weights
+    std::vector<float> weights(num_weights);
+
+    // Generate random weights
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+
+    for (int i = 0; i < num_weights; ++i) {
+        weights[i] = distribution(generator);
+    }
+
+    // Write to binary file
+    std::ofstream outFile("data/ff_weights2.bin", std::ios::binary);
+    outFile.write(reinterpret_cast<char*>(weights.data()), weights.size() * sizeof(float));
+    outFile.close();
+
+    std::cout << "Weights written to ff_weights2.bin" << std::endl;
+    return 0;
+}

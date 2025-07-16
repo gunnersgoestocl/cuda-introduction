@@ -1,0 +1,11 @@
+float input_embeddings[128][256] = {
+    // Initialize with random values or specific values as needed
+    {0.1f, 0.2f, 0.3f, /* ... */ 0.256f},
+    {0.1f, 0.2f, 0.3f, /* ... */ 0.256f},
+    {0.1f, 0.2f, 0.3f, /* ... */ 0.256f},
+    // ...
+    {0.1f, 0.2f, 0.3f, /* ... */ 0.256f}
+    // Fill in the rest of the 128 x 256 matrix
+};
+
+// Note: The above is a placeholder. You should fill in the actual values or generate them as needed.

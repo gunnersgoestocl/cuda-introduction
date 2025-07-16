@@ -1,0 +1,21 @@
+float weights_k[768][768] = {
+    // Initialize with random values or specific values as needed
+    {0.1, 0.2, 0.3, /* ... */ 0.768}, // Example row
+    {0.1, 0.2, 0.3, /* ... */ 0.768}, // Example row
+    // Continue for all 768 rows
+};
+
+void save_weights_k(const char* filename) {
+    FILE* file = fopen(filename, "wb");
+    if (file) {
+        fwrite(weights_k, sizeof(weights_k), 1, file);
+        fclose(file);
+    } else {
+        perror("Failed to open file for writing");
+    }
+}
+
+int main() {
+    save_weights_k("weights_k.bin");
+    return 0;
+}
