@@ -1,0 +1,192 @@
+rm -f  matmul_multidevice matmul_multinode
+nvcc -arch=sm_90 matmul_multidevice.cu -o matmul_multidevice
+nvcc -arch=sm_90 -O3 -I/work/opt/local/aarch64/apps/nvidia/24.9/ompi-cuda/4.1.6-12.6/include -L/work/opt/local/aarch64/apps/nvidia/24.9/ompi-cuda/4.1.6-12.6/lib:/work/opt/local/aarch64/cores/cuda/12.6/lib64 matmul_multinode.cu -o matmul_multinode -lmpi
+利用可能なMPIプロセス数（GPU数）: 16
+
+===== 各ノードのGPU情報 =====
+ランク 0 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 1 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 2 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 3 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 4 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 5 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 6 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 7 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 8 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 9 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 10 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 11 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 12 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 13 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 14 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+ランク 15 の GPU情報:
+GPU 0: NVIDIA GH200 120GB
+  Compute capability: 9.0
+  Total global memory: 94.50 GB
+  Multiprocessors: 132
+  Max threads per block: 1024
+
+
+===== パラメータ設定 =====
+行列サイズ: 32768 x 32768
+スカラー値: 2.0
+使用GPU数: 16
+
+行列の初期化中...
+元の行列 (32768x32768) の一部:
+     1.0      2.0      3.0  ...  32767.0  32768.0 
+ 32769.0  32770.0  32771.0  ...  65535.0  65536.0 
+ ... 
+1073676288.0 1073676288.0 1073676288.0  ... 1073709056.0 1073709056.0 
+1073709056.0 1073709056.0 1073709056.0  ... 1073741824.0 1073741824.0 
+
+
+===== シングルGPU処理開始 =====
+シングルGPU処理完了: 0.038879 秒
+
+===== マルチGPU処理開始 (16 GPUs) =====
+
+===== 詳細なタイミング分析 =====
+1. データ分配時間: 0.170359 秒 (全体の 36.4%)
+2. ホスト→デバイス転送: 0.002532 秒 (全体の 0.5%)
+3. カーネル実行時間: 0.000335 秒 (全体の 0.1%)
+4. デバイス→ホスト転送: 0.001214 秒 (全体の 0.3%)
+5. 結果収集時間: 0.222992 秒 (全体の 47.6%)
+
+主なボトルネック: 結果収集 (47.6% of total time)
+マルチGPU処理完了: 0.468601 秒
+
+===== 性能比較 =====
+シングルGPU実行時間: 0.038879 秒
+マルチGPU実行時間(16 GPUs): 0.468601 秒
+高速化率: 0.08倍
+効率: 0.52%
+
+===== 結果検証 =====
+シングルGPUとマルチGPUの結果は一致しています。
+シングルGPUでの処理後行列 (32768x32768) の一部:
+     2.0      4.0      6.0  ...  65534.0  65536.0 
+ 65538.0  65540.0  65542.0  ... 131070.0 131072.0 
+ ... 
+2147352576.0 2147352576.0 2147352576.0  ... 2147418112.0 2147418112.0 
+2147418112.0 2147418112.0 2147418112.0  ... 2147483648.0 2147483648.0 
+
+マルチGPUでの処理後行列 (32768x32768) の一部:
+     2.0      4.0      6.0  ...  65534.0  65536.0 
+ 65538.0  65540.0  65542.0  ... 131070.0 131072.0 
+ ... 
+2147352576.0 2147352576.0 2147352576.0  ... 2147418112.0 2147418112.0 
+2147418112.0 2147418112.0 2147418112.0  ... 2147483648.0 2147483648.0 
+
+
+===== TIMING_DATA_CSV_START =====
+rank,data_distribution,host_to_device,kernel_execution,device_to_host,data_collection,total_time
+0,0.285199,0.001370,0.000281,0.001196,0.180534,0.468596
+1,0.038919,0.001256,0.000341,0.001218,0.275070,0.316851
+2,0.056808,0.003082,0.000343,0.001205,0.266223,0.327676
+3,0.074517,0.003801,0.000336,0.001215,0.258611,0.338525
+4,0.092316,0.003201,0.000340,0.001218,0.252262,0.349352
+5,0.110174,0.003786,0.000336,0.001217,0.244650,0.360206
+6,0.127952,0.004888,0.000338,0.001213,0.236598,0.371033
+7,0.145494,0.003193,0.000334,0.001219,0.231597,0.381879
+8,0.163344,0.002531,0.000337,0.001218,0.225276,0.392715
+9,0.181000,0.001279,0.000341,0.001221,0.219707,0.403566
+10,0.198551,0.001289,0.000341,0.001206,0.212988,0.414390
+11,0.215634,0.001299,0.000339,0.001207,0.206717,0.425239
+12,0.232921,0.002545,0.000337,0.001213,0.199045,0.436074
+13,0.250086,0.003130,0.000338,0.001218,0.192110,0.446924
+14,0.267661,0.001271,0.000338,0.001218,0.187250,0.457754
+15,0.285172,0.002598,0.000336,0.001217,0.179237,0.468601
+===== TIMING_DATA_CSV_END =====
+結果ファイル: result/result_multinode_20250716212105.txt
+CSVファイル: result/timing_data_20250716212105.csv
