@@ -5,6 +5,8 @@
 #include <fstream>
 #include <chrono>
 #include <vector>
+#include <string>
+#include <functional>
 
 // Function to read binary data from a file
 template <typename T>
@@ -21,6 +23,13 @@ void readBinaryFile(const std::string& filename, std::vector<T>& data) {
     file.read(reinterpret_cast<char*>(data.data()), size);
     file.close();
 }
+
+// Binary data I/O functions
+void loadBinaryData(const std::string& filename, float* data, size_t size);
+void saveOutputData(const std::string& filename, const float* data, size_t size);
+
+// Performance measurement
+double measureExecutionTime(const std::function<void()>& func);
 
 // Function to measure execution time
 class Timer {

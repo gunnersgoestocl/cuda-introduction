@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <functional>
 
 void loadBinaryData(const std::string& filename, float* data, size_t size) {
     std::ifstream file(filename, std::ios::binary);

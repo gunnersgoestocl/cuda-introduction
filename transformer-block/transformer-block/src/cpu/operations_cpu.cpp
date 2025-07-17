@@ -1,97 +1,117 @@
 #include "operations_cpu.h"
-#include <iostream>
-#include <vector>
 #include <cmath>
-#include <chrono>
+#include <algorithm>
+#include <numeric>
+#include <stdexcept>
 #include <omp.h>
 
-void matmul(const std::vector<float>& A, const std::vector<float>& B, std::vector<float>& C, int M, int N, int K) {
+Matrix matmul(const Matrix& A, const Matrix& B) {
+    if (A.cols != B.rows) {
+        throw std::invalid_argument("Matrix dimensions incompatible for multiplication");
+    }
+    
+    Matrix C(A.rows, B.cols);
+    
     #pragma omp parallel for
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < N; ++j) {
-            C[i * N + j] = 0;
-            for (int k = 0; k < K; ++k) {
-                C[i * N + j] += A[i * K + k] * B[k * N + j];
+    for (size_t i = 0; i < A.rows; ++i) {
+        for (size_t j = 0; j < B.cols; ++j) {
+            float sum = 0.0f;
+            for (size_t k = 0; k < A.cols; ++k) {
+                sum += A(i, k) * B(k, j);
             }
+            C(i, j) = sum;
         }
     }
+    
+    return C;
 }
 
-void softmax(const std::vector<float>& scores, std::vector<float>& output, int size) {
-    float max_score = *std::max_element(scores.begin(), scores.end());
-    float sum_exp = 0.0f;
-
-    for (int i = 0; i < size; ++i) {
-        output[i] = std::exp(scores[i] - max_score);
-        sum_exp += output[i];
-    }
-
-    for (int i = 0; i < size; ++i) {
-        output[i] /= sum_exp;
-    }
-}
-
-void layer_norm(const std::vector<float>& input, std::vector<float>& output, float epsilon) {
-    float mean = 0.0f;
-    float variance = 0.0f;
-    int size = input.size();
-
-    for (int i = 0; i < size; ++i) {
-        mean += input[i];
-    }
-    mean /= size;
-
-    for (int i = 0; i < size; ++i) {
-        variance += (input[i] - mean) * (input[i] - mean);
-    }
-    variance /= size;
-
-    float stddev = std::sqrt(variance + epsilon);
-
-    for (int i = 0; i < size; ++i) {
-        output[i] = (input[i] - mean) / stddev;
-    }
-}
-
-void feed_forward(const std::vector<float>& input, const std::vector<float>& weights1, const std::vector<float>& weights2, std::vector<float>& output, int input_size, int hidden_size) {
-    std::vector<float> hidden(hidden_size);
-    matmul(input, weights1, hidden, 1, hidden_size, input_size);
+Matrix softmax(const Matrix& scores) {
+    Matrix result(scores.rows, scores.cols);
     
     #pragma omp parallel for
-    for (int i = 0; i < hidden_size; ++i) {
-        hidden[i] = std::max(0.0f, hidden[i]); // ReLU activation
+    for (size_t i = 0; i < scores.rows; ++i) {
+        // 各行に対してsoftmaxを適用
+        float max_val = *std::max_element(scores.data.begin() + i * scores.cols, 
+                                         scores.data.begin() + (i + 1) * scores.cols);
+        
+        float sum = 0.0f;
+        for (size_t j = 0; j < scores.cols; ++j) {
+            float exp_val = std::exp(scores(i, j) - max_val);
+            result(i, j) = exp_val;
+            sum += exp_val;
+        }
+        
+        // 正規化
+        for (size_t j = 0; j < scores.cols; ++j) {
+            result(i, j) /= sum;
+        }
     }
-
-    matmul(hidden, weights2, output, 1, input_size, hidden_size);
+    
+    return result;
 }
 
-void transformer_block(const std::vector<float>& input_embeddings, const std::vector<float>& weights_q, const std::vector<float>& weights_k, const std::vector<float>& weights_v, const std::vector<float>& ff_weights1, const std::vector<float>& ff_weights2, std::vector<float>& output) {
-    int input_size = 256; // Input dimension
-    int hidden_size = 768; // Intermediate dimension
-    std::vector<float> Q(input_size), K(input_size), V(input_size);
-    std::vector<float> scores(hidden_size), attention_scores(hidden_size), context(hidden_size), ff_output(input_size);
-
-    // Compute Q, K, V
-    matmul(input_embeddings, weights_q, Q, 1, hidden_size, input_size);
-    matmul(input_embeddings, weights_k, K, 1, hidden_size, input_size);
-    matmul(input_embeddings, weights_v, V, 1, hidden_size, input_size);
-
-    // Compute attention scores
-    matmul(Q, K, scores, 1, hidden_size, hidden_size);
-    softmax(scores, attention_scores, hidden_size);
+Matrix layer_norm(const Matrix& input, const Matrix& gamma, const Matrix& beta) {
+    Matrix result(input.rows, input.cols);
+    const float eps = 1e-6f;
     
-    // Compute context
-    matmul(attention_scores, V, context, 1, hidden_size, hidden_size);
-
-    // Residual connection
-    for (int i = 0; i < input_size; ++i) {
-        output[i] = input_embeddings[i] + context[i];
+    #pragma omp parallel for
+    for (size_t i = 0; i < input.rows; ++i) {
+        // 平均を計算
+        float mean = 0.0f;
+        for (size_t j = 0; j < input.cols; ++j) {
+            mean += input(i, j);
+        }
+        mean /= input.cols;
+        
+        // 分散を計算
+        float variance = 0.0f;
+        for (size_t j = 0; j < input.cols; ++j) {
+            float diff = input(i, j) - mean;
+            variance += diff * diff;
+        }
+        variance /= input.cols;
+        
+        // 正規化
+        float std_dev = std::sqrt(variance + eps);
+        for (size_t j = 0; j < input.cols; ++j) {
+            result(i, j) = gamma(0, j) * (input(i, j) - mean) / std_dev + beta(0, j);
+        }
     }
+    
+    return result;
+}
 
-    // Layer normalization
-    std::vector<float> norm_output(input_size);
-    layer_norm(output, norm_output, 1e-6);
+Matrix feed_forward(const Matrix& input, const Matrix& weights1, const Matrix& weights2) {
+    // 第1層: input * weights1 + ReLU
+    Matrix hidden = matmul(input, weights1);
+    
+    // ReLU活性化
+    #pragma omp parallel for
+    for (size_t i = 0; i < hidden.data.size(); ++i) {
+        hidden.data[i] = std::max(0.0f, hidden.data[i]);
+    }
+    
+    // 第2層: hidden * weights2
+    return matmul(hidden, weights2);
+}
 
-    // Feed forward
-    feed_forward(norm_output, ff_weights1, ff_weights2, output, input_size, hidden_size);
+void relu(std::vector<float>& data) {
+    #pragma omp parallel for
+    for (size_t i = 0; i < data.size(); ++i) {
+        data[i] = std::max(0.0f, data[i]);
+    }
+}
+
+Matrix transpose(const Matrix& input) {
+    Matrix result(input.cols, input.rows);
+    
+    #pragma omp parallel for
+    for (size_t i = 0; i < input.rows; ++i) {
+        for (size_t j = 0; j < input.cols; ++j) {
+            result(j, i) = input(i, j);
+        }
+    }
+    
+    return result;
 }

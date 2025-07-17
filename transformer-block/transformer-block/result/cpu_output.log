@@ -1,0 +1,12 @@
+Starting Transformer Block CPU implementation...
+Configuration:
+  Batch size: 32
+  Sequence length: 64
+  Model dimension: 256
+  Feed forward dimension: 1024
+Generating dummy data...
+Executing transformer block...
+Transformer block execution completed!
+Execution time: 0.0613017 seconds
+Output saved to result/cpu_output.bin
+Output matrix dimensions: 2048 x 256

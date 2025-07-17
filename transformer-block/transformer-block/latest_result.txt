@@ -1,0 +1,55 @@
+=== Transformer Block Performance Comparison ===
+Job started at: Thu Jul 17 02:53:27 AM JST 2025
+Working directory: /work/gc64/c64098/spring-training/cuda-introduction/transformer-block/transformer-block
+Building executables...
+rm -f out/* result/* cpu_transformer cuda_transformer
+g++ -O3 -fopenmp -I./src/common -o cpu_transformer src/cpu/transformer_cpu.cpp src/cpu/operations_cpu.cpp src/common/utils.cpp
+nvcc -O3 -arch=sm_90 -o cuda_transformer src/cuda/transformer_cuda.cu src/cuda/kernels.cu src/common/utils.cpp
+src/cuda/kernels.cu(273): warning #177-D: variable "total_ff_elements" was declared but never referenced
+      int total_ff_elements = batch_size * seq_length * d_ff;
+          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+Build completed successfully.
+
+=== Running CPU version ===
+CPU execution completed successfully
+CPU output log saved to: ./result/cpu_output.log
+
+=== Running CUDA version ===
+CUDA execution completed successfully
+CUDA output log saved to: ./result/cuda_output.log
+
+=== Comparing outputs ===
+⚠ Outputs differ (expected for different implementations)
+Difference log saved to: ./result/output_diff.log
+
+=== Execution Summary ===
+Job completed at: Thu Jul 17 02:53:32 AM JST 2025
+CPU execution log:
+  Batch size: 32
+  Sequence length: 64
+  Model dimension: 256
+  Feed forward dimension: 1024
+Generating dummy data...
+Executing transformer block...
+Transformer block execution completed!
+Execution time: 0.0613017 seconds
+Output saved to result/cpu_output.bin
+Output matrix dimensions: 2048 x 256
+
+CUDA execution log:
+Transferring results back to CPU...
+Transformer block execution completed!
+Execution time: 0.387429 seconds
+Output saved to result/cuda_output.bin
+Optimizations applied:
+  ✓ Fused kernel execution (single GPU launch)
+  ✓ Device functions for modularity
+  ✓ Asynchronous memory transfers
+  ✓ Stream-based overlap
+  ✓ Minimized host-device synchronization
+
+All logs saved in: ./result/
+Execution completed successfully.
