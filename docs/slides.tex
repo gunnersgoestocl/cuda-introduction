@@ -63,7 +63,20 @@
   frame           = single,      % 枠線
   backgroundcolor = \color{backcolour}
 }
-
+%%%%
+\setbeamertemplate{section in toc shaded}[default][20]
+\makeatletter
+\def\beamer@tocaction{\vskip0.1em}
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em}{\beamer@tocaction}{}{}
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em plus 1fil}{\beamer@tocaction}{}{}
+\makeatother
+%%%
+\usepackage{hyperref}
+% URLの#記号をエスケープするための設定
+\makeatletter
+\g@addto@macro\UrlSpecials{\do\#{\char35 }}
+\makeatother
+\newcommand{\ulhref}[2]{\href{#1}{\textcolor{cyan}{\uline{#2}}}}
 \lstset{style=mystyle}
 \title{CUDA: understand to be a genuine user}
 \author{takigawa}
@@ -90,14 +103,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{What is CUDA?}
 % 目次
-\begin{frame}{Contents}
-  \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
-    \item What is CUDA?: Introduction
-    \item \textcolor{gray}{A CUDA program for beginners}
-    \item \textcolor{gray}{How CUDA works}
-    \item \textcolor{gray}{Optimize CUDA program}
-    \item \textcolor{gray}{Practice Problems}
-  \end{enumerate}
+% \begin{frame}{Contents}
+%   \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
+%     \item What is CUDA?: Introduction
+%     \item \textcolor{gray}{A CUDA program for beginners}
+%     \item \textcolor{gray}{How CUDA works}
+%     \item \textcolor{gray}{Optimize CUDA program}
+%     \item \textcolor{gray}{Practice Problems}
+%   \end{enumerate}
+% \end{frame}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%
 \begin{frame}{CUDA is the abstraction of GPU(s) for programmers}
@@ -178,20 +196,25 @@ printf("  Total global memory: %.2f GB\n", deviceProp.totalGlobalMem / (1024.0 *
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A CUDA program for beginners}
 % 目次
-\begin{frame}{Contents}
-  \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
-    \item \textcolor{gray}{What is CUDA?: Introduction}
-    \item A CUDA program for beginners
-    \begin{enumerate}
-      \item Kernels; writing and launching
-      % __global__ kernelFunction, kernelFunction<<nb, bs>>(arg1, arg2, ...)
-      \item Host-Device Data Communication (+ Synchronization)
-      % cudaMalloc, cudaMemcpy, cudaMallocManaged, cudaDeviceSynchronize
-    \end{enumerate}
-    \item \textcolor{gray}{How CUDA works}
-    \item \textcolor{gray}{Optimize CUDA program}
-    \item \textcolor{gray}{Practice Problems}
-  \end{enumerate}
+% \begin{frame}{Contents}
+%   \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
+%     \item \textcolor{gray}{What is CUDA?: Introduction}
+%     \item A CUDA program for beginners
+%     \begin{enumerate}
+%       \item Kernels; writing and launching
+%       % __global__ kernelFunction, kernelFunction<<nb, bs>>(arg1, arg2, ...)
+%       \item Host-Device Data Communication (+ Synchronization)
+%       % cudaMalloc, cudaMemcpy, cudaMallocManaged, cudaDeviceSynchronize
+%     \end{enumerate}
+%     \item \textcolor{gray}{How CUDA works}
+%     \item \textcolor{gray}{Optimize CUDA program}
+%     \item \textcolor{gray}{Practice Problems}
+%   \end{enumerate}
+% \end{frame}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%%%%%%
 \subsection{Setting environment}
@@ -212,8 +235,14 @@ printf("  Total global memory: %.2f GB\n", deviceProp.totalGlobalMem / (1024.0 *
 %%%%%%%%%%
 \subsection{hello\_world}
 %%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+%%%%%
 \begin{frame}[fragile]{Sample program \#1: \texttt{hello\_world.cu}}
-  See \url{https://github.com/gunnersgoestocl/cuda-introduction/tree/main/tutorial-legacy} for more information.
+  See \url{https://github.com/gunnersgoestocl/cuda-introduction/tree/main/setup} for more information.
 \begin{block}{}
   \begin{lstlisting}[language=CUDA]
 #include <stdio.h>
@@ -327,7 +356,7 @@ __global__ void f(...args...) { ...body... }
   \item So, programmers are expected to make the kernel visible to all threads as the same instruction.
   \item For this perspective, a unique ID of each thread (= the loop index) is the key.
 \end{itemize}
-In CUDA, each kernel can access its own thread ID through built-in variables on the \href{https://docs.nvidia.com/cuda/parallel-thread-execution/#special-registers}{Special Registers}.
+In CUDA, each kernel can access its own thread ID through built-in variables on the \ulhref{https://docs.nvidia.com/cuda/parallel-thread-execution/\#special-registers}{Special Registers}.
 \begin{itemize}
   \item \lstinline|blockDim.{x,y} = bs| (the block size)
   \item \lstinline|gridDim.{x,y} = nb| (the number of blocks)
@@ -338,6 +367,12 @@ In CUDA, each kernel can access its own thread ID through built-in variables on 
 \end{frame}
 %%%%%%%%
 \subsection{hello\_gpu}
+%%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
 %%%%%
 \begin{frame}[fragile]{Sample program \#2: \texttt{hello\_gpu.cu}}
 \begin{block}{}\vspace{-\baselineskip}
@@ -508,28 +543,33 @@ h2();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{HOW CUDA works}
 % 目次
-\begin{frame}{Contents}
-  \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
-    \item \textcolor{gray}{What is CUDA?: Introduction}
-    \item \textcolor{gray}{A CUDA program for beginners}
-    \item How CUDA works
-    \begin{enumerate}
-      \item Architecture of NVIDIA GPU
-      % GPU unit, global memory, stream processor
-      \item Grid, block, thread; abstractions by CUDA
-      % block-SM, grid-GPU unit
-      \item Warp; Parallel Thread eXecution
-      % warp consists of 32 threads, SIMD, why threadIdx/blockIdx
-      \item Stream: beyond Grid
-      % stream is a FIFO queue, stream ID
-      \item Memory Hierarchy in CUDA
-      % global memory, shared memory, cache
-      \item Resolving race condition on CUDA
-      % atomicAdd, barrier synchronization, reduction(, cooperative groups)
-    \end{enumerate}
-    \item \textcolor{gray}{Optimize CUDA program}
-    \item \textcolor{gray}{Practice Problems}
-  \end{enumerate}
+% \begin{frame}{Contents}
+%   \begin{enumerate}%[<+->]   % <+-> で 1 行ずつ出現
+%     \item \textcolor{gray}{What is CUDA?: Introduction}
+%     \item \textcolor{gray}{A CUDA program for beginners}
+%     \item How CUDA works
+%     \begin{enumerate}
+%       \item Architecture of NVIDIA GPU
+%       % GPU unit, global memory, stream processor
+%       \item Grid, block, thread; abstractions by CUDA
+%       % block-SM, grid-GPU unit
+%       \item Warp; Parallel Thread eXecution
+%       % warp consists of 32 threads, SIMD, why threadIdx/blockIdx
+%       \item Stream: beyond Grid
+%       % stream is a FIFO queue, stream ID
+%       \item Memory Hierarchy in CUDA
+%       % global memory, shared memory, cache
+%       \item Resolving race condition on CUDA
+%       % atomicAdd, barrier synchronization, reduction(, cooperative groups)
+%     \end{enumerate}
+%     \item \textcolor{gray}{Optimize CUDA program}
+%     \item \textcolor{gray}{Practice Problems}
+%   \end{enumerate}
+% \end{frame}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%%%%%
 \subsection{Architecture of NVIDIA GPU}
@@ -592,6 +632,12 @@ h2();
 %%%%%%%%
 \subsection{Grid, block, thread; abstractions by CUDA}
 %%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+%%%%%
 \begin{frame}{3 easy pieces about hardware - software}
 Programmers know 3 things about CUDA: Grid, Block, Thread
   \begin{itemize}
@@ -628,6 +674,12 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
 %%%%%%%%
 \subsection{Warp: Parallel Thread eXecution}
 %%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
+%%%%%
 \begin{frame}{Warp: The way to realize "Parallel" Thread eXecution}
  % Parallelism in your program is sometimes helped by Concurrency
   \begin{itemize}
@@ -635,6 +687,11 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
     \item The number of threads that make up a warp has always been \textbf{32}.
     \item Each thread in a warp shares an instruction pointer (i.e, executes the same instruction at the same time).
     \item The warp scheduler selects a warp from the ready queue (Warp pool) and executes the instruction.
+    \item The warp lanes (threads) that is not running does NOT necessarily mean they are saved to memory and swept out from the RF
+    \begin{itemize}
+      \item because RF of each SM is way larger than that of CPU
+      \item the cost of "context switch" (i.e., interrupt a warp and run another) is fundamentally smaller
+    \end{itemize}
   \end{itemize}
 \end{frame}
 %%%%%
@@ -665,11 +722,44 @@ Programmers know 3 things about CUDA: Grid, Block, Thread
   \end{columns}
 \end{frame}
 %%%%%
+\begin{frame}{Advantages of larger number of threads per block, blocks: \textbf{increase Occupancy}}
+\begin{itemize}
+  \item One of the target is to ensure that CUDA cores are \textcolor{blue}{always occupied by warps}
+  \begin{itemize}
+    \item Data dependencies or synchronization often make warps inactive(waiting)
+    \item Thus, we make sure that (at least) one of the warps are active on every SM by \textcolor{red}{setting the number of threads per block to several times the number of CUDA cores}
+  \end{itemize}
+  \item Another target is to use all the available SMs in a balanced manner (i.e., SMs are \textcolor{blue}{always occupied} by blocks)
+  \begin{itemize}
+    \item To fulfill this goal, \textcolor{red}{several times greater number of thread blocks than that of SMs} are required.
+  \end{itemize}
+  \item In order to know the best GridSize and blockSize, CUDA offers a tool \lstinline|cudaOccupancyMaxPotentialBlockSize(&(int)minGridSize, &(int)blockSize, kernel, 0, 0);|
+\end{itemize}
+\end{frame}
+%%%%%
 \begin{frame}{Limitation of Hardware: performance degradation}
-
+However, too many threads per block or blocks are sometimes problematic
+\begin{itemize}
+  \item If each thread uses large amount of registers, too many threads per block can raise register pressure
+  \begin{itemize}
+    \item \textbf{Register Spill} costs performance
+    \item For example, using \textbf{Tensor Cores} raises register pressure
+  \end{itemize}
+  \item If each thread block accesses large data, too many thread blocks per SM can raise Cache pressure
+  \begin{itemize}
+    \item Retire from L1 cache (SM specific memory) will occur too often
+    \item Thus, the execution of block will pay the cost of global memory access too often
+  \end{itemize}
+\end{itemize}
 \end{frame}
 %%%%%%%%
 \subsection{Stream: beyond Grid} % How is the execution across \textcolor{red}{multiple \lstinline|grid|s} handled?
+%%%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
 %%%%%%
 \begin{frame}{Stream}
   (review) As long as multiple kernels are submitted to the same stream(i.e., the default stream), 
@@ -720,10 +810,22 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
 \end{lstlisting}
 \end{frame}
 %%%%%
+\begin{frame}[fragile]{Observation of multiple stream}
+\begin{figure}
+  \includegraphics[scale=0.25]{img/resultMatmulMultistream20250703142638TimelineDiagram.png}
+  \caption{Timeline Diagram of Matmul using multiple streams}
+\end{figure}
+\vspace{-\baselineskip}
+
+\ulhref{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/multistream/}{Code}  
+{\small
+  You can do \lstinline|qsub ./run_matmul.sh|, and then \lstinline|./vis.sh YYYYMMDDHHMMSS| to visualize (Timestamp is available from the name of  \lstinline|result/result_**.txt|)}
+\end{frame}
+%%%%%
 \begin{frame}{(+) Using multiple Devices in a single Node : thread}
   † You CANNOT try this on Miyabi, because each node has only \textcolor{red}{1} device.
 
-  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/matmul_multidevice.cu}{\uline{サンプルコード}}
+  \ulhref{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/multinode/matmul_multidevice.cu}{Sample Codes}
 
   However, I don't have the environment where the program can execute.
 \end{frame}
@@ -743,13 +845,19 @@ cudaStreamWaitEvent(sCompute, done, 0); // sCompute は done まで待つ
     \end{itemize}
   \end{itemize}
   Sample Program: 
-  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/matmul_multinode.cu}{\uline{\lstinline|matmul_multinode.cu| (github link)}} (just \lstinline|make|) 
+  \ulhref{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/multinode/matmul_multinode.cu}{\lstinline|matmul_multinode.cu| (github link)} (just \lstinline|make|) 
 
   Job Script:
-  \href{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/matmul-advanced/run.sh}{Sample Script (github link)} (just \lstinline|qsub ./run.sh|)
+  \ulhref{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/multinode/run.sh}{Sample Script (github link)} (just \lstinline|qsub ./run.sh|)
 \end{frame}
 %%%%%%%%%
 \subsection{Memory Hierarchy in CUDA}
+%%%%%
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
+\end{frame}
 %%%%%
 \begin{frame}{Memory hierarchy of NVIDIA GPU: overview}
   % global memory, shared memory, cache etc. Clarify which programmers can explicitly use
@@ -838,55 +946,109 @@ __global__ void transpose_read_coalesced(
   \end{figure}
 \end{frame}
 %%%%%%%%
-\begin{frame}{(+) Tiling: effective use of shared memory in GEMM}
+% \begin{frame}{(+) Tiling: effective use of shared memory in GEMM}
   
-\end{frame}
+% \end{frame}
 %%%%%%%%
-\subsection{Resolving race condition on CUDA}
-%%%%%
-\begin{frame}{To avoid race conditions: effective use of parameters}
+% \subsection{Resolving race condition on CUDA}
+% %%%%%
+% \begin{frame}{To avoid race conditions: barrier synchronization}
 
-\end{frame}
-%%%%%
-\begin{frame}{To avoid race conditions: barrier synchronization}
+% \end{frame}
+% %%%%%
+% \begin{frame}{To avoid race conditions: Cooperative groups}
 
-\end{frame}
-%%%%%
-\begin{frame}{To avoid race conditions: Cooperative groups}
+% \end{frame}
+% %%%%%%%%
+% \begin{frame}{(Reluctantly) resolve race conditions: Atomic accumulations}
 
-\end{frame}
-%%%%%%%%
-\begin{frame}{(Reluctantly) resolve race conditions: Atomic accumulations}
-
-\end{frame}
+% \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Optimize CUDA program}
 % 目次
-\begin{frame}{Contents}
-   \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
-   \item \textcolor{gray}{What is CUDA?: Introduction}
-   \item \textcolor{gray}{A CUDA program for beginners}
-   \item \textcolor{gray}{How CUDA works}
-   \item Optimize CUDA program
-   \begin{enumerate}
-     \item How to measure performance?
-     \item Choosing a good block size for performance
-     \item Using shared memory effectively
-     \item Example: matrix multiplication
-   \end{enumerate}
-   \item \textcolor{gray}{Practice Problems}
- \end{enumerate}
+% \begin{frame}{Contents}
+%    \begin{enumerate}[<+->]   % <+-> で 1 行ずつ出現
+%    \item \textcolor{gray}{What is CUDA?: Introduction}
+%    \item \textcolor{gray}{A CUDA program for beginners}
+%    \item \textcolor{gray}{How CUDA works}
+%    \item Optimize CUDA program
+%    \begin{enumerate}
+%      \item How to measure performance?
+%      \item Choosing a good block size for performance
+%      \item Using shared memory effectively
+%      \item Example: matrix multiplication
+%    \end{enumerate}
+%    \item \textcolor{gray}{Practice Problems}
+%  \end{enumerate}
+% \end{frame}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%%%%
-\begin{frame}{How to measure performance: }
+\subsection{How to measure performance}
+%%%%%
+\begin{frame}[fragile]{How to measure performance: APIs}
+\vspace{-\baselineskip}
+\begin{columns}
+\column{0.5\textwidth}
+\vspace{-\baselineskip}
+
 If you write a CUDA code, don't forget to check the calculation result and the performance improvement!
 \begin{itemize}
-  \item 
+  \item To measure time of kernel execution from Host code: \lstinline|cudaEventRecord();|
 \end{itemize}
+\begin{lstlisting}[language=CUDA, basicstyle=\ttfamily\tiny]
+    cudaEvent_t start, stop;
+    CUDA_CHECK(cudaEventCreate(&start));
+    CUDA_CHECK(cudaEventCreate(&stop));
+    
+    CUDA_CHECK(cudaEventRecord(start));
+    kernel<<<grid, block>>>(...);
+    CUDA_CHECK(cudaEventRecord(stop));
+\end{lstlisting}
+\column{0.5\textwidth}
+\begin{itemize}
+  \item To measure time of operation on GPU from the device code:\lstinline|clock64();|
+\end{itemize}
+\begin{lstlisting}[language=CUDA, basicstyle=\ttfamily\tiny]
+    typedef struct {
+        uint64_t mma_start;
+        uint64_t mma_end;
+    } DeviceTimingInfo;
+
+    __global__ void kernel(...
+        , DeviceTimingInfo *timing_info) {
+      bool is_measuring_thread = (threadIdx.x == 0 
+              && blockIdx.x == 0 && blockIdx.y == 0);
+      if (is_measuring_thread) {
+          timing_info->mma_start = clock64();
+      }
+      // target operation
+      if (is_measuring_thread) {
+          timing_info->mma_end = clock64();
+      }
+    }
+\end{lstlisting}
+\end{columns}
 \end{frame}
 %%%%%
-\begin{frame}{How to measure performance: }
-
+\begin{frame}[fragile]{How to measure performance: Tips}
+When you measure time, you have to take care of...
+\begin{itemize}
+  \item Don't forget to do warm-ups in order to remove the effect of minor faults or device initialization
+  \item Should iterate the execution, and calculate the average of them
+  \item Insert synchronization (eg. between Host and Device, threads on a SM) as much as needed.
+\end{itemize}
+To interpret the result, it is important to
+\begin{itemize}
+  \item understand what the time really consists of
+  \begin{itemize}
+    \item Is it just a computation or a computation with a memory access? Think of \lstinline|c[i] += A[j]*B[k]|
+    \item Does it include synchronization overhead or not? (This overhead cannot be ignored!)
+  \end{itemize}
+\end{itemize}
 \end{frame}
 %%%%%%%%%
 %\begin{frame}{Matmul program (naive implementation)}
@@ -901,6 +1063,8 @@ If you write a CUDA code, don't forget to check the calculation result and the p
 %
 %\end{frame}
 %%%%%%%%
+\subsection{Using Tensore Core}
+%%%%%
 \begin{frame}[fragile]{Using Tensor Core}
 \begin{columns}
 \column{0.55\textwidth}
@@ -1013,22 +1177,39 @@ __global__ void wmma_ker(half *a, half *b, float *c) {
 }
 \end{lstlisting}
 \end{frame}
+%%%%%
+\begin{frame}[fragile]{Observation of tensorcore matrix multiplication}
+\begin{figure}
+  \includegraphics[scale=0.25]{img/tensorcoreTotalComputeTimeComparison.png}
+  \caption{Tensor Core Total Kernel Execution Time Comparison}
+\end{figure}
+\vspace{-\baselineskip}
+
+\ulhref{https://github.com/gunnersgoestocl/cuda-introduction/blob/main/tensorcore/}{Codes} 
+{\small
+You can do \lstinline|qsub ./run.sh|, and then \lstinline|./vis.sh YYYYMMDDHHMMSS| to visualize (Timestamp is available from the name of  \lstinline|result/result_**.txt|)}
+\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Practice Problems}
 %%%%%%%%%
 % 目次
-\begin{frame}{Contents}
- \begin{enumerate}   % <+-> で 1 行ずつ出現
-   \item \textcolor{gray}{What is CUDA?: Introduction}
-   \item \textcolor{gray}{A CUDA program for beginners}
-   \item \textcolor{gray}{How CUDA works}
-   \item \textcolor{gray}{Optimize CUDA program}
-   \item Practice Problems
-   \begin{enumerate}
-     \item Problem: accelerate the Transformer block inference
-     \item (Option) Mundane problems
-   \end{enumerate}
- \end{enumerate}
+% \begin{frame}{Contents}
+%  \begin{enumerate}   % <+-> で 1 行ずつ出現
+%    \item \textcolor{gray}{What is CUDA?: Introduction}
+%    \item \textcolor{gray}{A CUDA program for beginners}
+%    \item \textcolor{gray}{How CUDA works}
+%    \item \textcolor{gray}{Optimize CUDA program}
+%    \item Practice Problems
+%    \begin{enumerate}
+%      \item Problem: accelerate the Transformer block inference
+%      \item (Option) Mundane problems
+%    \end{enumerate}
+%  \end{enumerate}
+% \end{frame}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%%%%
 \begin{frame}{Practical Problem: accelerate the Transformer block inference}
@@ -1072,22 +1253,44 @@ __global__ void wmma_ker(half *a, half *b, float *c) {
 %     \item Appendices
 %   \end{enumerate}
 % \end{frame}
-%%%%%
-\begin{frame}{Compute Capability of H100 GPU}
-  \begin{figure}
-    \includegraphics[scale=0.3]{img/computeCapability.png}
-    \caption{\href{https://www.advancedclustering.com/wp-content/uploads/2022/03/gtc22-whitepaper-hopper.pdf}{NVIDIA H100 white paper}}
-  \end{figure}
+\begin{frame}
+    \frametitle{Contents}
+    \linespread{0.6}\selectfont
+    \tableofcontents[currentsection, hideothersubsections]
 \end{frame}
 %%%%%
-\begin{frame}{PTX code example}
-  
+\begin{frame}
+\begin{itemize}
+  \item How to avoid race conditions between threads
+  \item Register shared threads intra warp
+  \item Cuda Graph
+  \item Usage of profiler (nsys, ncu)
+\end{itemize}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{Compute Capability of H100 GPU}
+  \begin{figure}
+    \includegraphics[scale=0.25]{img/computeCapability.png}
+    \caption{NVIDIA H100 white paper}
+  \end{figure}
+  \ulhref{https://www.advancedclustering.com/wp-content/uploads/2022/03/gtc22-whitepaper-hopper.pdf}{NVIDIA H100 white paper link}
+\end{frame}
+%%%%%
+\begin{frame}[fragile]{PTX code example}
+If you want to see the Assembly of Device Code, just run \lstinline|cuobjdump -ptx $(TARGET) > $(TARGET).ptx|.
+Basic PTX formats are as follow:
+\begin{itemize}
+  \item (instruction name).(data type) \%(dst reg number), \%(src1 reg number) [, \%(src2 reg number)]
+  \item \lstinline|mov|, arithmetics(\lstinline|add| etc.), memory access (\lstinline|st| etc.,), bit-wise and so on are available 
+\end{itemize}
+However, some kinds of special instructions needs additional fields like
+\lstinline|wmma.load.a.sync.aligned.row.m16n16k16.global.f16 {%r10, %r11, %r12, %r13, %r14, %r15, %r16, %r17}, [%rd15], %r28;|
 \end{frame}
 %%%%%
 \subsection{Hardware implementation of LSU}
 %%%%%
 \begin{frame}[fragile]{(Auxiliary) Hardware implementation of LSU}
-  \vspace{-1.5\baselineskip}
+  % \vspace{-1.5\baselineskip}
 %  \begin{block}{}
     \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
 // lsu.v
@@ -1120,8 +1323,8 @@ module lsu(
 %  \end{block}
 \end{frame}
 %%%%%
-\begin{frame}[fragile]{(Auxiliary) Hardware implementation of CPU's LSU}
-  \vspace{-1.5\baselineskip}
+\begin{frame}[fragile]%{(Auxiliary) Hardware implementation of CPU's LSU}
+  % \vspace{-1.5\baselineskip}
 %  \begin{block}{}
     \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
   /* M-stage */
@@ -1157,8 +1360,8 @@ module lsu(
 %  \end{block}
 \end{frame}
 %%%%%
-\begin{frame}[fragile]{(Auxiliary) Hardware implementation of LSU}
-  \vspace{-1.5\baselineskip}
+\begin{frame}[fragile]%{(Auxiliary) Hardware implementation of LSU}
+  % \vspace{-1.5\baselineskip}
     \begin{lstlisting}[language=verilog, basicstyle=\ttfamily\tiny]
   /* W-stage */
   always @(*) begin
@@ -1193,8 +1396,8 @@ module lsu(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{References}
   \begin{enumerate}\footnotesize
-    \item \url{https://docs.nvidia.com/cuda/parallel-thread-execution/#}
-    \item \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#}
+    \item \url{https://docs.nvidia.com/cuda/parallel-thread-execution/}
+    \item \url{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html}
     \item \url{https://resources.nvidia.com/en-us-data-center-overview-mc/en-us-data-center-overview/grace-hopper-superchip-datasheet-partner}
     \item \url{https://docs.nvidia.com/cuda/cuda-runtime-api/index.html}
     \item \url{https://www.nas.nasa.gov/hecc/support/kb/basics-on-nvidia-gpu-hardware-architecture_704.html}
